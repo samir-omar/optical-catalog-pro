@@ -11,8 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AddItemRouteImport } from './routes/add-item'
+import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ItemsRouteImport } from './routes/items'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SuppliersRouteImport } from './routes/suppliers'
 import { Route as ItemsIndexRouteImport } from './routes/items.index'
 import { Route as ItemsIdRouteImport } from './routes/items.$id'
 
@@ -26,6 +29,11 @@ const AddItemRoute = AddItemRouteImport.update({
   path: '/add-item',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CategoriesRoute = CategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -34,6 +42,16 @@ const DashboardRoute = DashboardRouteImport.update({
 const ItemsRoute = ItemsRouteImport.update({
   id: '/items',
   path: '/items',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuppliersRoute = SuppliersRouteImport.update({
+  id: '/suppliers',
+  path: '/suppliers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ItemsIndexRoute = ItemsIndexRouteImport.update({
@@ -50,15 +68,21 @@ const ItemsIdRoute = ItemsIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/add-item': typeof AddItemRoute
+  '/categories': typeof CategoriesRoute
   '/dashboard': typeof DashboardRoute
   '/items': typeof ItemsRouteWithChildren
+  '/settings': typeof SettingsRoute
+  '/suppliers': typeof SuppliersRoute
   '/items/$id': typeof ItemsIdRoute
   '/items/': typeof ItemsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/add-item': typeof AddItemRoute
+  '/categories': typeof CategoriesRoute
   '/dashboard': typeof DashboardRoute
+  '/settings': typeof SettingsRoute
+  '/suppliers': typeof SuppliersRoute
   '/items/$id': typeof ItemsIdRoute
   '/items': typeof ItemsIndexRoute
 }
@@ -66,23 +90,45 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/add-item': typeof AddItemRoute
+  '/categories': typeof CategoriesRoute
   '/dashboard': typeof DashboardRoute
   '/items': typeof ItemsRouteWithChildren
+  '/settings': typeof SettingsRoute
+  '/suppliers': typeof SuppliersRoute
   '/items/$id': typeof ItemsIdRoute
   '/items/': typeof ItemsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/add-item' | '/dashboard' | '/items' | '/items/$id' | '/items/'
+    | '/'
+    | '/add-item'
+    | '/categories'
+    | '/dashboard'
+    | '/items'
+    | '/settings'
+    | '/suppliers'
+    | '/items/$id'
+    | '/items/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/add-item' | '/dashboard' | '/items/$id' | '/items'
+  to:
+    | '/'
+    | '/add-item'
+    | '/categories'
+    | '/dashboard'
+    | '/settings'
+    | '/suppliers'
+    | '/items/$id'
+    | '/items'
   id:
     | '__root__'
     | '/'
     | '/add-item'
+    | '/categories'
     | '/dashboard'
     | '/items'
+    | '/settings'
+    | '/suppliers'
     | '/items/$id'
     | '/items/'
   fileRoutesById: FileRoutesById
@@ -90,8 +136,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AddItemRoute: typeof AddItemRoute
+  CategoriesRoute: typeof CategoriesRoute
   DashboardRoute: typeof DashboardRoute
   ItemsRoute: typeof ItemsRouteWithChildren
+  SettingsRoute: typeof SettingsRoute
+  SuppliersRoute: typeof SuppliersRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -110,6 +159,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AddItemRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/categories': {
+      id: '/categories'
+      path: '/categories'
+      fullPath: '/categories'
+      preLoaderRoute: typeof CategoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -122,6 +178,20 @@ declare module '@tanstack/react-router' {
       path: '/items'
       fullPath: '/items'
       preLoaderRoute: typeof ItemsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/suppliers': {
+      id: '/suppliers'
+      path: '/suppliers'
+      fullPath: '/suppliers'
+      preLoaderRoute: typeof SuppliersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/items/': {
@@ -156,8 +226,11 @@ const ItemsRouteWithChildren = ItemsRoute._addFileChildren(ItemsRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AddItemRoute: AddItemRoute,
+  CategoriesRoute: CategoriesRoute,
   DashboardRoute: DashboardRoute,
   ItemsRoute: ItemsRouteWithChildren,
+  SettingsRoute: SettingsRoute,
+  SuppliersRoute: SuppliersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
