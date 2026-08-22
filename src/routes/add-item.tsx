@@ -86,10 +86,12 @@ function AddItemPage() {
   const [notes, setNotes] = useState("");
   const [image, setImage] = useState<string | undefined>(undefined);
   const [rows, setRows] = useState<SizeRow[]>([]);
-  const [newSize, setNewSize] = useState("");
+  const [newEye, setNewEye] = useState<Eye>("R");
+  const [newSph, setNewSph] = useState("");
+  const [newCyl, setNewCyl] = useState("");
   const [newPrice, setNewPrice] = useState("");
   const [editingRow, setEditingRow] = useState<string | null>(null);
-  const [draft, setDraft] = useState({ size: "", price: "" });
+  const [draft, setDraft] = useState({ eye: "R" as Eye, sph: "", cyl: "", price: "" });
   const [error, setError] = useState<string | null>(null);
 
   const reset = () => {
