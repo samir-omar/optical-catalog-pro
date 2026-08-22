@@ -228,7 +228,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const newSizes: ItemSize[] = sizes.map((s) => ({
         id: s.id || uid(),
         item_id: record.id,
-        size: s.size.trim(),
+        eye: s.eye,
+        sph: s.sph,
+        cyl: s.cyl,
         price: s.price,
       }));
       commit({
