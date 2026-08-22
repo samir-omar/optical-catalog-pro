@@ -204,11 +204,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return "This item code (SKU) already exists.";
       if (!item.supplier_id) return "Supplier is required.";
       if (!item.customer_category_id) return "Customer category is required.";
-      if (sizes.length === 0) return "Add at least one size with its price.";
-      const normalized = sizes.map((s) => s.size.trim());
-      if (normalized.some((s) => !s)) return "Size cannot be empty.";
+      if (sizes.length === 0) return "Add at least one lens (eye + SPH + CYL) with its price.";
+      if (sizes.some((s) => s.eye !== "R" && s.eye !== "L"))
+        return "Each lens must be assigned to the right (R) or left (L) eye.";
+      if (sizes.some((s) => !Number.isFinite(s.sph) || !Number.isFinite(s.cyl)))
+        return "SPH and CYL must be valid numbers.";
+      const normalized = sizes.map((s) => `${s.eye}|${s.sph}|${s.cyl}`);
       if (new Set(normalized).size !== normalized.length)
-        return "Duplicate sizes are not allowed for the same item.";
+        return "This eye already has the same SPH and CYL for this item.";
       if (sizes.some((s) => !Number.isFinite(s.price) || s.price <= 0))
         return "Price must be a valid positive number.";
 
