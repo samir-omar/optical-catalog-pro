@@ -259,7 +259,7 @@ function ItemsSearch() {
         <div className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {results.map((r) => (
             <Link
-              key={`${r.itemId}-${r.size}`}
+              key={r.sizeId}
               to="/items/$id"
               params={{ id: r.itemId }}
               className="card-elevated group overflow-hidden transition-transform hover:-translate-y-0.5"
