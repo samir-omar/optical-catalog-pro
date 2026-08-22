@@ -314,7 +314,7 @@ function ItemsSearch() {
             </TableHeader>
             <TableBody>
               {results.map((r) => (
-                <TableRow key={`${r.itemId}-${r.size}-row`}>
+                <TableRow key={`${r.sizeId}-row`}>
                   <TableCell>
                     <Link
                       to="/items/$id"
