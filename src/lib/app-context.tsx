@@ -18,7 +18,8 @@ import type {
   User,
 } from "./types";
 
-const SESSION_KEY = "optic-catalog-session";
+// The session is intentionally kept in memory only: closing or reloading the
+// app always requires signing in again.
 
 interface AppContextValue {
   db: Database;
