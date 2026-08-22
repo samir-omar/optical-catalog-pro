@@ -123,10 +123,11 @@ function AddItemPage() {
     setNotes(item.notes ?? "");
     setImage(item.image);
     setRows(
-      db.sizes
-        .filter((s) => s.item_id === item.id)
-        .sort((a, b) => Number(a.size) - Number(b.size))
-        .map((s) => ({ id: s.id, size: s.size, price: s.price })),
+      sortRows(
+        db.sizes
+          .filter((s) => s.item_id === item.id)
+          .map((s) => ({ id: s.id, eye: s.eye, sph: s.sph, cyl: s.cyl, price: s.price })),
+      ),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editId]);
