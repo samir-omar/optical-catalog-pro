@@ -44,7 +44,9 @@ export const Route = createFileRoute("/items/")({
 
 function ItemsSearch() {
   const { db } = useApp();
-  const [sizeQuery, setSizeQuery] = useState("");
+  const [sphQuery, setSphQuery] = useState("");
+  const [cylQuery, setCylQuery] = useState("");
+  const [eyeFilter, setEyeFilter] = useState<"all" | Eye>("all");
   const [exact, setExact] = useState(true);
   const [text, setText] = useState("");
   const [supplier, setSupplier] = useState("all");
@@ -52,14 +54,19 @@ function ItemsSearch() {
   const [view, setView] = useState<"cards" | "table">("cards");
 
   const results = useMemo(() => {
-    const q = sizeQuery.trim();
+    const sphQ = parseDiopter(sphQuery);
+    const cylQ = parseDiopter(cylQuery);
+    const tol = exact ? 0 : 0.5;
     const t = text.trim().toLowerCase();
     const rows: Array<{
       itemId: string;
       name: string;
       sku: string;
       image?: string;
-      size: string;
+      sizeId: string;
+      eye: Eye;
+      sph: number;
+      cyl: number;
       price: number;
       supplier: string;
       category: string;
@@ -75,10 +82,14 @@ function ItemsSearch() {
 
       const itemSizes = db.sizes
         .filter((s) => s.item_id === item.id)
-        .sort((a, b) => Number(a.size) - Number(b.size));
-      const matching = q
-        ? itemSizes.filter((s) => (exact ? s.size === q : s.size.includes(q)))
-        : itemSizes;
+        .sort((a, b) => (a.eye === b.eye ? a.sph - b.sph : a.eye === "R" ? -1 : 1));
+
+      const matching = itemSizes.filter((s) => {
+        if (eyeFilter !== "all" && s.eye !== eyeFilter) return false;
+        if (sphQ !== null && Math.abs(s.sph - sphQ) > tol) return false;
+        if (cylQ !== null && Math.abs(s.cyl - cylQ) > tol) return false;
+        return true;
+      });
       if (matching.length === 0) continue;
 
       const supplierName =
@@ -92,56 +103,90 @@ function ItemsSearch() {
           name: item.name,
           sku: item.sku,
           image: item.image,
-          size: m.size,
+          sizeId: m.id,
+          eye: m.eye,
+          sph: m.sph,
+          cyl: m.cyl,
           price: m.price,
           supplier: supplierName,
           category: categoryName,
-          allSizes: itemSizes.map((s) => s.size),
+          allSizes: itemSizes.map((s) => lensLabel(s)),
           created_at: item.created_at,
         });
       }
     }
     return rows;
-  }, [db, sizeQuery, exact, text, supplier, category]);
+  }, [db, sphQuery, cylQuery, eyeFilter, exact, text, supplier, category]);
 
   return (
-    <AppShell title="Items" description="Search the catalog by size">
+    <AppShell title="Items" description="Search the catalog by eye, SPH and CYL">
       <div className="card-elevated p-6">
-        <Label htmlFor="size" className="text-sm font-medium">
-          Search by Size
+        <Label htmlFor="sph" className="text-sm font-medium">
+          Search by Lens Power (SPH / CYL)
         </Label>
-        <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-          <div className="relative flex-1">
+        <div className="mt-2 grid gap-3 lg:grid-cols-[1fr_1fr_170px_170px]">
+          <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
-              id="size"
-              inputMode="numeric"
+              id="sph"
+              inputMode="decimal"
               autoFocus
-              value={sizeQuery}
-              onChange={(e) => setSizeQuery(e.target.value)}
-              placeholder="e.g. 52"
+              value={sphQuery}
+              onChange={(e) => setSphQuery(e.target.value)}
+              placeholder="SPH e.g. +6.00"
               className="h-14 pl-12 text-lg"
             />
-            {sizeQuery ? (
+            {sphQuery ? (
               <button
                 type="button"
-                onClick={() => setSizeQuery("")}
+                onClick={() => setSphQuery("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                aria-label="Clear size"
+                aria-label="Clear SPH"
               >
                 <X className="h-4 w-4" />
               </button>
             ) : null}
           </div>
+          <div className="relative">
+            <Input
+              id="cyl"
+              inputMode="decimal"
+              value={cylQuery}
+              onChange={(e) => setCylQuery(e.target.value)}
+              placeholder="CYL e.g. -1.00"
+              className="h-14 pl-4 text-lg"
+            />
+            {cylQuery ? (
+              <button
+                type="button"
+                onClick={() => setCylQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Clear CYL"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            ) : null}
+          </div>
+          <Select value={eyeFilter} onValueChange={(v) => setEyeFilter(v as "all" | Eye)}>
+            <SelectTrigger className="h-14" aria-label="Eye">
+              <SelectValue placeholder="Eye" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Both eyes</SelectItem>
+              <SelectItem value="R">Right (R)</SelectItem>
+              <SelectItem value="L">Left (L)</SelectItem>
+            </SelectContent>
+          </Select>
           <Button
             type="button"
             variant={exact ? "default" : "outline"}
             className="h-14 px-6"
             onClick={() => setExact((v) => !v)}
           >
-            {exact ? "Exact match" : "Partial match"}
+            {exact ? "Exact match" : "±0.50 match"}
           </Button>
         </div>
+
 
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           <Input
