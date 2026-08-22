@@ -28,15 +28,17 @@ import {
 export const Route = createFileRoute("/items/")({
   head: () => ({
     meta: [
-      { title: "Search by Size — Eyewear Price Catalog" },
+      { title: "Search by SPH & CYL — Eyewear Price Catalog" },
       {
         name: "description",
-        content: "Search glasses by lens size and see the supplier, category and exact price.",
+        content:
+          "Search glasses by eye, SPH and CYL and see the supplier, category and exact price.",
       },
-      { property: "og:title", content: "Search by Size — Eyewear Price Catalog" },
+      { property: "og:title", content: "Search by SPH & CYL — Eyewear Price Catalog" },
       {
         property: "og:description",
-        content: "Search glasses by lens size and see the supplier, category and exact price.",
+        content:
+          "Search glasses by eye, SPH and CYL and see the supplier, category and exact price.",
       },
     ],
   }),
