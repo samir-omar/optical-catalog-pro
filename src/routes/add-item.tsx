@@ -139,30 +139,39 @@ function AddItemPage() {
     reader.readAsDataURL(file);
   };
 
+  const validateLens = (
+    eye: Eye,
+    sphRaw: string,
+    cylRaw: string,
+    priceRaw: string,
+    ignoreRowId?: string,
+  ) => {
+    const sph = parseDiopter(sphRaw);
+    const cyl = parseDiopter(cylRaw);
+    const price = Number(priceRaw);
+    if (sph === null) return { error: "SPH is required (e.g. +6.00)." } as const;
+    if (cyl === null) return { error: "CYL is required (e.g. -1.00)." } as const;
+    if (rows.some((r) => r.id !== ignoreRowId && r.eye === eye && r.sph === sph && r.cyl === cyl))
+      return { error: "This eye already has the same SPH and CYL." } as const;
+    if (!Number.isFinite(price) || price <= 0)
+      return { error: "Price must be a positive number." } as const;
+    return { value: { eye, sph, cyl, price } } as const;
+  };
+
   const addSize = () => {
-    const size = newSize.trim();
-    const price = Number(newPrice);
-    if (!size) return setError("Size is required.");
-    if (rows.some((r) => r.size === size)) return setError("This size already exists for the item.");
-    if (!Number.isFinite(price) || price <= 0) return setError("Price must be a positive number.");
-    setRows((r) => [...r, { id: uid(), size, price }].sort((a, b) => Number(a.size) - Number(b.size)));
-    setNewSize("");
+    const res = validateLens(newEye, newSph, newCyl, newPrice);
+    if ("error" in res) return setError(res.error);
+    setRows((r) => sortRows([...r, { id: uid(), ...res.value }]));
+    setNewSph("");
+    setNewCyl("");
     setNewPrice("");
     setError(null);
   };
 
   const saveRow = (rowId: string) => {
-    const size = draft.size.trim();
-    const price = Number(draft.price);
-    if (!size) return setError("Size is required.");
-    if (rows.some((r) => r.id !== rowId && r.size === size))
-      return setError("This size already exists for the item.");
-    if (!Number.isFinite(price) || price <= 0) return setError("Price must be a positive number.");
-    setRows((r) =>
-      r
-        .map((x) => (x.id === rowId ? { ...x, size, price } : x))
-        .sort((a, b) => Number(a.size) - Number(b.size)),
-    );
+    const res = validateLens(draft.eye, draft.sph, draft.cyl, draft.price, rowId);
+    if ("error" in res) return setError(res.error);
+    setRows((r) => sortRows(r.map((x) => (x.id === rowId ? { ...x, ...res.value } : x))));
     setEditingRow(null);
     setError(null);
   };
