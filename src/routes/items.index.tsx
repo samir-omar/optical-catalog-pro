@@ -229,7 +229,9 @@ function ItemsSearch() {
       <div className="mt-6 flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {results.length} result{results.length === 1 ? "" : "s"}
-          {sizeQuery ? ` for size ${sizeQuery}` : ""}
+          {sphQuery ? ` · SPH ${sphQuery}` : ""}
+          {cylQuery ? ` · CYL ${cylQuery}` : ""}
+          {eyeFilter !== "all" ? ` · ${eyeFilter === "R" ? "Right" : "Left"} eye` : ""}
         </p>
         <div className="flex gap-1">
           <Button
