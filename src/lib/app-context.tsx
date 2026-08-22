@@ -76,13 +76,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       );
       if (!u) return "Username not found.";
       if (u.password_hash !== hashPassword(password)) return "Incorrect password.";
-      window.localStorage.setItem(SESSION_KEY, u.username);
       setCurrentUser(u.username);
       return null;
     };
 
     const logout = () => {
-      window.localStorage.removeItem(SESSION_KEY);
       setCurrentUser(null);
     };
 
