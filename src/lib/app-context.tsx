@@ -32,14 +32,14 @@ interface AppContextValue {
   updateUser: (id: string, username: string, password?: string) => string | null;
   deleteUser: (id: string) => string | null;
   // suppliers
-  saveSupplier: (s: Omit<Supplier, "created_at"> & { created_at?: string }) => string | null;
+  saveSupplier: (s: Omit<Supplier, "created_at"> & { created_at?: string | undefined }) => string | null;
   deleteSupplier: (id: string) => string | null;
   // categories
-  saveCategory: (c: Omit<CustomerCategory, "created_at"> & { created_at?: string }) => string | null;
+  saveCategory: (c: Omit<CustomerCategory, "created_at"> & { created_at?: string | undefined }) => string | null;
   deleteCategory: (id: string) => string | null;
   // items
   saveItem: (
-    item: Omit<Item, "created_at" | "updated_at"> & { created_at?: string },
+    item: Omit<Item, "created_at" | "updated_at"> & { created_at?: string | undefined },
     sizes: Array<Omit<ItemSize, "item_id">>,
   ) => string | null;
   deleteItem: (id: string) => void;
