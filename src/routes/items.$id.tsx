@@ -3,7 +3,7 @@ import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, ImagePlaceholder } from "@/components/app-shell";
 import { useApp } from "@/lib/app-context";
-import { formatPrice } from "@/lib/db";
+import { formatDiopter, formatPrice } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
