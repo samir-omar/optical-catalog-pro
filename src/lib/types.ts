@@ -20,10 +20,14 @@ export interface CustomerCategory {
   created_at: string;
 }
 
+export type Eye = "R" | "L";
+
 export interface ItemSize {
   id: string;
   item_id: string;
-  size: string;
+  eye: Eye;
+  sph: number;
+  cyl: number;
   price: number;
 }
 
