@@ -291,18 +291,34 @@ function AddItemPage() {
 
         <div className="card-elevated space-y-4 p-6">
           <div>
-            <h2 className="text-lg font-semibold">Sizes and Prices</h2>
+            <h2 className="text-lg font-semibold">Lens Powers and Prices</h2>
             <p className="text-sm text-muted-foreground">
-              Add each size with its own fixed price (e.g. 52 → 550 EGP).
+              Each eye (R / L) gets its own SPH and CYL with a fixed price (e.g. R · SPH +6.00 ·
+              CYL -1.00 → 500 EGP).
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 rounded-lg border border-dashed border-border p-4 sm:flex-row">
+          <div className="grid gap-3 rounded-lg border border-dashed border-border p-4 sm:grid-cols-5">
+            <Select value={newEye} onValueChange={(v) => setNewEye(v as Eye)}>
+              <SelectTrigger aria-label="Eye">
+                <SelectValue placeholder="Eye" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="R">R — Right</SelectItem>
+                <SelectItem value="L">L — Left</SelectItem>
+              </SelectContent>
+            </Select>
             <Input
-              placeholder="Size (e.g. 52)"
-              value={newSize}
-              inputMode="numeric"
-              onChange={(e) => setNewSize(e.target.value)}
+              placeholder="SPH (+6.00)"
+              value={newSph}
+              inputMode="decimal"
+              onChange={(e) => setNewSph(e.target.value)}
+            />
+            <Input
+              placeholder="CYL (-1.00)"
+              value={newCyl}
+              inputMode="decimal"
+              onChange={(e) => setNewCyl(e.target.value)}
             />
             <Input
               placeholder="Price in EGP"
@@ -311,7 +327,7 @@ function AddItemPage() {
               onChange={(e) => setNewPrice(e.target.value)}
             />
             <Button type="button" onClick={addSize}>
-              <Plus className="mr-2 h-4 w-4" /> Add size
+              <Plus className="mr-2 h-4 w-4" /> Add lens
             </Button>
           </div>
 
@@ -324,7 +340,9 @@ function AddItemPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Size</TableHead>
+                <TableHead>Eye</TableHead>
+                <TableHead>SPH</TableHead>
+                <TableHead>CYL</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -332,8 +350,8 @@ function AddItemPage() {
             <TableBody>
               {rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
-                    No sizes added yet.
+                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    No lens powers added yet.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -341,9 +359,29 @@ function AddItemPage() {
                   editingRow === r.id ? (
                     <TableRow key={r.id}>
                       <TableCell>
+                        <Select
+                          value={draft.eye}
+                          onValueChange={(v) => setDraft((d) => ({ ...d, eye: v as Eye }))}
+                        >
+                          <SelectTrigger aria-label="Eye">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="R">R</SelectItem>
+                            <SelectItem value="L">L</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
                         <Input
-                          value={draft.size}
-                          onChange={(e) => setDraft((d) => ({ ...d, size: e.target.value }))}
+                          value={draft.sph}
+                          onChange={(e) => setDraft((d) => ({ ...d, sph: e.target.value }))}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={draft.cyl}
+                          onChange={(e) => setDraft((d) => ({ ...d, cyl: e.target.value }))}
                         />
                       </TableCell>
                       <TableCell>
@@ -369,8 +407,10 @@ function AddItemPage() {
                   ) : (
                     <TableRow key={r.id}>
                       <TableCell>
-                        <Badge variant="secondary">{r.size}</Badge>
+                        <Badge variant={r.eye === "R" ? "default" : "secondary"}>{r.eye}</Badge>
                       </TableCell>
+                      <TableCell className="tabular-nums">{formatDiopter(r.sph)}</TableCell>
+                      <TableCell className="tabular-nums">{formatDiopter(r.cyl)}</TableCell>
                       <TableCell className="font-semibold text-price">
                         {formatPrice(r.price)}
                       </TableCell>
@@ -381,7 +421,12 @@ function AddItemPage() {
                           variant="ghost"
                           onClick={() => {
                             setEditingRow(r.id);
-                            setDraft({ size: r.size, price: String(r.price) });
+                            setDraft({
+                              eye: r.eye,
+                              sph: formatDiopter(r.sph),
+                              cyl: formatDiopter(r.cyl),
+                              price: String(r.price),
+                            });
                           }}
                         >
                           <Pencil className="h-4 w-4" />
