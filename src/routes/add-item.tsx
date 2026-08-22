@@ -60,9 +60,15 @@ export const Route = createFileRoute("/add-item")({
 
 interface SizeRow {
   id: string;
-  size: string;
+  eye: Eye;
+  sph: number;
+  cyl: number;
   price: number;
 }
+
+const sortRows = (rows: SizeRow[]) =>
+  [...rows].sort((a, b) => (a.eye === b.eye ? a.sph - b.sph : a.eye === "R" ? -1 : 1));
+
 
 function AddItemPage() {
   const { id: editId } = Route.useSearch();
