@@ -18,7 +18,8 @@ import type {
   User,
 } from "./types";
 
-const SESSION_KEY = "optic-catalog-session";
+// The session is intentionally kept in memory only: closing or reloading the
+// app always requires signing in again.
 
 interface AppContextValue {
   db: Database;
@@ -31,14 +32,14 @@ interface AppContextValue {
   updateUser: (id: string, username: string, password?: string) => string | null;
   deleteUser: (id: string) => string | null;
   // suppliers
-  saveSupplier: (s: Omit<Supplier, "created_at"> & { created_at?: string }) => string | null;
+  saveSupplier: (s: Omit<Supplier, "created_at"> & { created_at?: string | undefined }) => string | null;
   deleteSupplier: (id: string) => string | null;
   // categories
-  saveCategory: (c: Omit<CustomerCategory, "created_at"> & { created_at?: string }) => string | null;
+  saveCategory: (c: Omit<CustomerCategory, "created_at"> & { created_at?: string | undefined }) => string | null;
   deleteCategory: (id: string) => string | null;
   // items
   saveItem: (
-    item: Omit<Item, "created_at" | "updated_at"> & { created_at?: string },
+    item: Omit<Item, "created_at" | "updated_at"> & { created_at?: string | undefined },
     sizes: Array<Omit<ItemSize, "item_id">>,
   ) => string | null;
   deleteItem: (id: string) => void;
@@ -54,7 +55,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setDb(loadDb());
-    setCurrentUser(window.localStorage.getItem(SESSION_KEY));
     setReady(true);
   }, []);
 
@@ -76,13 +76,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       );
       if (!u) return "Username not found.";
       if (u.password_hash !== hashPassword(password)) return "Incorrect password.";
-      window.localStorage.setItem(SESSION_KEY, u.username);
       setCurrentUser(u.username);
       return null;
     };
 
     const logout = () => {
-      window.localStorage.removeItem(SESSION_KEY);
       setCurrentUser(null);
     };
 
@@ -206,11 +204,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return "This item code (SKU) already exists.";
       if (!item.supplier_id) return "Supplier is required.";
       if (!item.customer_category_id) return "Customer category is required.";
-      if (sizes.length === 0) return "Add at least one size with its price.";
-      const normalized = sizes.map((s) => s.size.trim());
-      if (normalized.some((s) => !s)) return "Size cannot be empty.";
+      if (sizes.length === 0) return "Add at least one lens (eye + SPH + CYL) with its price.";
+      if (sizes.some((s) => s.eye !== "R" && s.eye !== "L"))
+        return "Each lens must be assigned to the right (R) or left (L) eye.";
+      if (sizes.some((s) => !Number.isFinite(s.sph) || !Number.isFinite(s.cyl)))
+        return "SPH and CYL must be valid numbers.";
+      const normalized = sizes.map((s) => `${s.eye}|${s.sph}|${s.cyl}`);
       if (new Set(normalized).size !== normalized.length)
-        return "Duplicate sizes are not allowed for the same item.";
+        return "This eye already has the same SPH and CYL for this item.";
       if (sizes.some((s) => !Number.isFinite(s.price) || s.price <= 0))
         return "Price must be a valid positive number.";
 
@@ -227,7 +228,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const newSizes: ItemSize[] = sizes.map((s) => ({
         id: s.id || uid(),
         item_id: record.id,
-        size: s.size.trim(),
+        eye: s.eye,
+        sph: s.sph,
+        cyl: s.cyl,
         price: s.price,
       }));
       commit({

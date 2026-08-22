@@ -4,7 +4,8 @@ import { Check, ImagePlus, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, ImagePlaceholder } from "@/components/app-shell";
 import { useApp } from "@/lib/app-context";
-import { formatPrice, uid } from "@/lib/db";
+import { formatDiopter, formatPrice, parseDiopter, uid } from "@/lib/db";
+import type { Eye } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,9 +61,15 @@ export const Route = createFileRoute("/add-item")({
 
 interface SizeRow {
   id: string;
-  size: string;
+  eye: Eye;
+  sph: number;
+  cyl: number;
   price: number;
 }
+
+const sortRows = (rows: SizeRow[]) =>
+  [...rows].sort((a, b) => (a.eye === b.eye ? a.sph - b.sph : a.eye === "R" ? -1 : 1));
+
 
 function AddItemPage() {
   const { id: editId } = Route.useSearch();
@@ -79,10 +86,12 @@ function AddItemPage() {
   const [notes, setNotes] = useState("");
   const [image, setImage] = useState<string | undefined>(undefined);
   const [rows, setRows] = useState<SizeRow[]>([]);
-  const [newSize, setNewSize] = useState("");
+  const [newEye, setNewEye] = useState<Eye>("R");
+  const [newSph, setNewSph] = useState("");
+  const [newCyl, setNewCyl] = useState("");
   const [newPrice, setNewPrice] = useState("");
   const [editingRow, setEditingRow] = useState<string | null>(null);
-  const [draft, setDraft] = useState({ size: "", price: "" });
+  const [draft, setDraft] = useState({ eye: "R" as Eye, sph: "", cyl: "", price: "" });
   const [error, setError] = useState<string | null>(null);
 
   const reset = () => {
@@ -114,10 +123,11 @@ function AddItemPage() {
     setNotes(item.notes ?? "");
     setImage(item.image);
     setRows(
-      db.sizes
-        .filter((s) => s.item_id === item.id)
-        .sort((a, b) => Number(a.size) - Number(b.size))
-        .map((s) => ({ id: s.id, size: s.size, price: s.price })),
+      sortRows(
+        db.sizes
+          .filter((s) => s.item_id === item.id)
+          .map((s) => ({ id: s.id, eye: s.eye, sph: s.sph, cyl: s.cyl, price: s.price })),
+      ),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editId]);
@@ -129,30 +139,39 @@ function AddItemPage() {
     reader.readAsDataURL(file);
   };
 
+  const validateLens = (
+    eye: Eye,
+    sphRaw: string,
+    cylRaw: string,
+    priceRaw: string,
+    ignoreRowId?: string,
+  ) => {
+    const sph = parseDiopter(sphRaw);
+    const cyl = parseDiopter(cylRaw);
+    const price = Number(priceRaw);
+    if (sph === null) return { error: "SPH is required (e.g. +6.00)." } as const;
+    if (cyl === null) return { error: "CYL is required (e.g. -1.00)." } as const;
+    if (rows.some((r) => r.id !== ignoreRowId && r.eye === eye && r.sph === sph && r.cyl === cyl))
+      return { error: "This eye already has the same SPH and CYL." } as const;
+    if (!Number.isFinite(price) || price <= 0)
+      return { error: "Price must be a positive number." } as const;
+    return { value: { eye, sph, cyl, price } } as const;
+  };
+
   const addSize = () => {
-    const size = newSize.trim();
-    const price = Number(newPrice);
-    if (!size) return setError("Size is required.");
-    if (rows.some((r) => r.size === size)) return setError("This size already exists for the item.");
-    if (!Number.isFinite(price) || price <= 0) return setError("Price must be a positive number.");
-    setRows((r) => [...r, { id: uid(), size, price }].sort((a, b) => Number(a.size) - Number(b.size)));
-    setNewSize("");
+    const res = validateLens(newEye, newSph, newCyl, newPrice);
+    if ("error" in res) return setError(res.error);
+    setRows((r) => sortRows([...r, { id: uid(), ...res.value }]));
+    setNewSph("");
+    setNewCyl("");
     setNewPrice("");
     setError(null);
   };
 
   const saveRow = (rowId: string) => {
-    const size = draft.size.trim();
-    const price = Number(draft.price);
-    if (!size) return setError("Size is required.");
-    if (rows.some((r) => r.id !== rowId && r.size === size))
-      return setError("This size already exists for the item.");
-    if (!Number.isFinite(price) || price <= 0) return setError("Price must be a positive number.");
-    setRows((r) =>
-      r
-        .map((x) => (x.id === rowId ? { ...x, size, price } : x))
-        .sort((a, b) => Number(a.size) - Number(b.size)),
-    );
+    const res = validateLens(draft.eye, draft.sph, draft.cyl, draft.price, rowId);
+    if ("error" in res) return setError(res.error);
+    setRows((r) => sortRows(r.map((x) => (x.id === rowId ? { ...x, ...res.value } : x))));
     setEditingRow(null);
     setError(null);
   };
@@ -272,18 +291,34 @@ function AddItemPage() {
 
         <div className="card-elevated space-y-4 p-6">
           <div>
-            <h2 className="text-lg font-semibold">Sizes and Prices</h2>
+            <h2 className="text-lg font-semibold">Lens Powers and Prices</h2>
             <p className="text-sm text-muted-foreground">
-              Add each size with its own fixed price (e.g. 52 → 550 EGP).
+              Each eye (R / L) gets its own SPH and CYL with a fixed price (e.g. R · SPH +6.00 ·
+              CYL -1.00 → 500 EGP).
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 rounded-lg border border-dashed border-border p-4 sm:flex-row">
+          <div className="grid gap-3 rounded-lg border border-dashed border-border p-4 sm:grid-cols-5">
+            <Select value={newEye} onValueChange={(v) => setNewEye(v as Eye)}>
+              <SelectTrigger aria-label="Eye">
+                <SelectValue placeholder="Eye" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="R">R — Right</SelectItem>
+                <SelectItem value="L">L — Left</SelectItem>
+              </SelectContent>
+            </Select>
             <Input
-              placeholder="Size (e.g. 52)"
-              value={newSize}
-              inputMode="numeric"
-              onChange={(e) => setNewSize(e.target.value)}
+              placeholder="SPH (+6.00)"
+              value={newSph}
+              inputMode="decimal"
+              onChange={(e) => setNewSph(e.target.value)}
+            />
+            <Input
+              placeholder="CYL (-1.00)"
+              value={newCyl}
+              inputMode="decimal"
+              onChange={(e) => setNewCyl(e.target.value)}
             />
             <Input
               placeholder="Price in EGP"
@@ -292,7 +327,7 @@ function AddItemPage() {
               onChange={(e) => setNewPrice(e.target.value)}
             />
             <Button type="button" onClick={addSize}>
-              <Plus className="mr-2 h-4 w-4" /> Add size
+              <Plus className="mr-2 h-4 w-4" /> Add lens
             </Button>
           </div>
 
@@ -305,7 +340,9 @@ function AddItemPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Size</TableHead>
+                <TableHead>Eye</TableHead>
+                <TableHead>SPH</TableHead>
+                <TableHead>CYL</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -313,8 +350,8 @@ function AddItemPage() {
             <TableBody>
               {rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
-                    No sizes added yet.
+                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    No lens powers added yet.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -322,9 +359,29 @@ function AddItemPage() {
                   editingRow === r.id ? (
                     <TableRow key={r.id}>
                       <TableCell>
+                        <Select
+                          value={draft.eye}
+                          onValueChange={(v) => setDraft((d) => ({ ...d, eye: v as Eye }))}
+                        >
+                          <SelectTrigger aria-label="Eye">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="R">R</SelectItem>
+                            <SelectItem value="L">L</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
                         <Input
-                          value={draft.size}
-                          onChange={(e) => setDraft((d) => ({ ...d, size: e.target.value }))}
+                          value={draft.sph}
+                          onChange={(e) => setDraft((d) => ({ ...d, sph: e.target.value }))}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={draft.cyl}
+                          onChange={(e) => setDraft((d) => ({ ...d, cyl: e.target.value }))}
                         />
                       </TableCell>
                       <TableCell>
@@ -350,8 +407,10 @@ function AddItemPage() {
                   ) : (
                     <TableRow key={r.id}>
                       <TableCell>
-                        <Badge variant="secondary">{r.size}</Badge>
+                        <Badge variant={r.eye === "R" ? "default" : "secondary"}>{r.eye}</Badge>
                       </TableCell>
+                      <TableCell className="tabular-nums">{formatDiopter(r.sph)}</TableCell>
+                      <TableCell className="tabular-nums">{formatDiopter(r.cyl)}</TableCell>
                       <TableCell className="font-semibold text-price">
                         {formatPrice(r.price)}
                       </TableCell>
@@ -362,7 +421,12 @@ function AddItemPage() {
                           variant="ghost"
                           onClick={() => {
                             setEditingRow(r.id);
-                            setDraft({ size: r.size, price: String(r.price) });
+                            setDraft({
+                              eye: r.eye,
+                              sph: formatDiopter(r.sph),
+                              cyl: formatDiopter(r.cyl),
+                              price: String(r.price),
+                            });
                           }}
                         >
                           <Pencil className="h-4 w-4" />

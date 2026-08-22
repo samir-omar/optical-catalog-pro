@@ -3,7 +3,7 @@ import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, ImagePlaceholder } from "@/components/app-shell";
 import { useApp } from "@/lib/app-context";
-import { formatPrice } from "@/lib/db";
+import { formatDiopter, formatPrice } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -58,7 +58,7 @@ function ItemDetails() {
 
   const sizes = db.sizes
     .filter((s) => s.item_id === item.id)
-    .sort((a, b) => Number(a.size) - Number(b.size));
+    .sort((a, b) => (a.eye === b.eye ? a.sph - b.sph : a.eye === "R" ? -1 : 1));
   const supplier = db.suppliers.find((s) => s.id === item.supplier_id)?.name ?? "—";
   const category = db.categories.find((c) => c.id === item.customer_category_id)?.name ?? "—";
 
@@ -127,19 +127,24 @@ function ItemDetails() {
         </div>
 
         <div className="card-elevated p-6">
-          <h2 className="text-lg font-semibold">Sizes &amp; Prices</h2>
-          <p className="text-sm text-muted-foreground">Each size has its own fixed price.</p>
+          <h2 className="text-lg font-semibold">Lens Powers &amp; Prices</h2>
+          <p className="text-sm text-muted-foreground">
+            Each eye (R / L) has its own SPH and CYL with a fixed price.
+          </p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {sizes.map((s) => (
               <div key={s.id} className="rounded-xl border border-border bg-muted/40 p-5">
-                <Badge variant="secondary" className="text-sm">
-                  Size {s.size}
+                <Badge variant={s.eye === "R" ? "default" : "secondary"} className="text-sm">
+                  {s.eye === "R" ? "Right eye (R)" : "Left eye (L)"}
                 </Badge>
-                <p className="mt-3 text-3xl font-bold text-price">{formatPrice(s.price)}</p>
+                <p className="mt-3 text-sm tabular-nums text-muted-foreground">
+                  SPH {formatDiopter(s.sph)} · CYL {formatDiopter(s.cyl)}
+                </p>
+                <p className="mt-1 text-3xl font-bold text-price">{formatPrice(s.price)}</p>
               </div>
             ))}
             {sizes.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No sizes recorded.</p>
+              <p className="text-sm text-muted-foreground">No lens powers recorded.</p>
             ) : null}
           </div>
         </div>

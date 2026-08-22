@@ -3,7 +3,8 @@ import { useMemo, useState } from "react";
 import { LayoutGrid, Rows3, Search, X } from "lucide-react";
 import { AppShell, ImagePlaceholder } from "@/components/app-shell";
 import { useApp } from "@/lib/app-context";
-import { formatPrice } from "@/lib/db";
+import { formatDiopter, formatPrice, lensLabel, parseDiopter } from "@/lib/db";
+import type { Eye } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -27,15 +28,17 @@ import {
 export const Route = createFileRoute("/items/")({
   head: () => ({
     meta: [
-      { title: "Search by Size — Eyewear Price Catalog" },
+      { title: "Search by SPH & CYL — Eyewear Price Catalog" },
       {
         name: "description",
-        content: "Search glasses by lens size and see the supplier, category and exact price.",
+        content:
+          "Search glasses by eye, SPH and CYL and see the supplier, category and exact price.",
       },
-      { property: "og:title", content: "Search by Size — Eyewear Price Catalog" },
+      { property: "og:title", content: "Search by SPH & CYL — Eyewear Price Catalog" },
       {
         property: "og:description",
-        content: "Search glasses by lens size and see the supplier, category and exact price.",
+        content:
+          "Search glasses by eye, SPH and CYL and see the supplier, category and exact price.",
       },
     ],
   }),
@@ -44,7 +47,9 @@ export const Route = createFileRoute("/items/")({
 
 function ItemsSearch() {
   const { db } = useApp();
-  const [sizeQuery, setSizeQuery] = useState("");
+  const [sphQuery, setSphQuery] = useState("");
+  const [cylQuery, setCylQuery] = useState("");
+  const [eyeFilter, setEyeFilter] = useState<"all" | Eye>("all");
   const [exact, setExact] = useState(true);
   const [text, setText] = useState("");
   const [supplier, setSupplier] = useState("all");
@@ -52,14 +57,19 @@ function ItemsSearch() {
   const [view, setView] = useState<"cards" | "table">("cards");
 
   const results = useMemo(() => {
-    const q = sizeQuery.trim();
+    const sphQ = parseDiopter(sphQuery);
+    const cylQ = parseDiopter(cylQuery);
+    const tol = exact ? 0 : 0.5;
     const t = text.trim().toLowerCase();
     const rows: Array<{
       itemId: string;
       name: string;
       sku: string;
-      image?: string;
-      size: string;
+      image?: string | undefined;
+      sizeId: string;
+      eye: Eye;
+      sph: number;
+      cyl: number;
       price: number;
       supplier: string;
       category: string;
@@ -75,10 +85,14 @@ function ItemsSearch() {
 
       const itemSizes = db.sizes
         .filter((s) => s.item_id === item.id)
-        .sort((a, b) => Number(a.size) - Number(b.size));
-      const matching = q
-        ? itemSizes.filter((s) => (exact ? s.size === q : s.size.includes(q)))
-        : itemSizes;
+        .sort((a, b) => (a.eye === b.eye ? a.sph - b.sph : a.eye === "R" ? -1 : 1));
+
+      const matching = itemSizes.filter((s) => {
+        if (eyeFilter !== "all" && s.eye !== eyeFilter) return false;
+        if (sphQ !== null && Math.abs(s.sph - sphQ) > tol) return false;
+        if (cylQ !== null && Math.abs(s.cyl - cylQ) > tol) return false;
+        return true;
+      });
       if (matching.length === 0) continue;
 
       const supplierName =
@@ -92,56 +106,90 @@ function ItemsSearch() {
           name: item.name,
           sku: item.sku,
           image: item.image,
-          size: m.size,
+          sizeId: m.id,
+          eye: m.eye,
+          sph: m.sph,
+          cyl: m.cyl,
           price: m.price,
           supplier: supplierName,
           category: categoryName,
-          allSizes: itemSizes.map((s) => s.size),
+          allSizes: itemSizes.map((s) => lensLabel(s)),
           created_at: item.created_at,
         });
       }
     }
     return rows;
-  }, [db, sizeQuery, exact, text, supplier, category]);
+  }, [db, sphQuery, cylQuery, eyeFilter, exact, text, supplier, category]);
 
   return (
-    <AppShell title="Items" description="Search the catalog by size">
+    <AppShell title="Items" description="Search the catalog by eye, SPH and CYL">
       <div className="card-elevated p-6">
-        <Label htmlFor="size" className="text-sm font-medium">
-          Search by Size
+        <Label htmlFor="sph" className="text-sm font-medium">
+          Search by Lens Power (SPH / CYL)
         </Label>
-        <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-          <div className="relative flex-1">
+        <div className="mt-2 grid gap-3 lg:grid-cols-[1fr_1fr_170px_170px]">
+          <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
-              id="size"
-              inputMode="numeric"
+              id="sph"
+              inputMode="decimal"
               autoFocus
-              value={sizeQuery}
-              onChange={(e) => setSizeQuery(e.target.value)}
-              placeholder="e.g. 52"
+              value={sphQuery}
+              onChange={(e) => setSphQuery(e.target.value)}
+              placeholder="SPH e.g. +6.00"
               className="h-14 pl-12 text-lg"
             />
-            {sizeQuery ? (
+            {sphQuery ? (
               <button
                 type="button"
-                onClick={() => setSizeQuery("")}
+                onClick={() => setSphQuery("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                aria-label="Clear size"
+                aria-label="Clear SPH"
               >
                 <X className="h-4 w-4" />
               </button>
             ) : null}
           </div>
+          <div className="relative">
+            <Input
+              id="cyl"
+              inputMode="decimal"
+              value={cylQuery}
+              onChange={(e) => setCylQuery(e.target.value)}
+              placeholder="CYL e.g. -1.00"
+              className="h-14 pl-4 text-lg"
+            />
+            {cylQuery ? (
+              <button
+                type="button"
+                onClick={() => setCylQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Clear CYL"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            ) : null}
+          </div>
+          <Select value={eyeFilter} onValueChange={(v) => setEyeFilter(v as "all" | Eye)}>
+            <SelectTrigger className="h-14" aria-label="Eye">
+              <SelectValue placeholder="Eye" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Both eyes</SelectItem>
+              <SelectItem value="R">Right (R)</SelectItem>
+              <SelectItem value="L">Left (L)</SelectItem>
+            </SelectContent>
+          </Select>
           <Button
             type="button"
             variant={exact ? "default" : "outline"}
             className="h-14 px-6"
             onClick={() => setExact((v) => !v)}
           >
-            {exact ? "Exact match" : "Partial match"}
+            {exact ? "Exact match" : "±0.50 match"}
           </Button>
         </div>
+
 
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           <Input
@@ -181,7 +229,9 @@ function ItemsSearch() {
       <div className="mt-6 flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {results.length} result{results.length === 1 ? "" : "s"}
-          {sizeQuery ? ` for size ${sizeQuery}` : ""}
+          {sphQuery ? ` · SPH ${sphQuery}` : ""}
+          {cylQuery ? ` · CYL ${cylQuery}` : ""}
+          {eyeFilter !== "all" ? ` · ${eyeFilter === "R" ? "Right" : "Left"} eye` : ""}
         </p>
         <div className="flex gap-1">
           <Button
@@ -209,7 +259,7 @@ function ItemsSearch() {
         <div className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {results.map((r) => (
             <Link
-              key={`${r.itemId}-${r.size}`}
+              key={r.sizeId}
               to="/items/$id"
               params={{ id: r.itemId }}
               className="card-elevated group overflow-hidden transition-transform hover:-translate-y-0.5"
@@ -225,8 +275,11 @@ function ItemsSearch() {
                     <h3 className="truncate font-semibold">{r.name}</h3>
                     <p className="text-xs text-muted-foreground">{r.sku}</p>
                   </div>
-                  <Badge variant="secondary" className="shrink-0 text-sm">
-                    Size {r.size}
+                  <Badge
+                    variant={r.eye === "R" ? "default" : "secondary"}
+                    className="shrink-0 text-sm"
+                  >
+                    {r.eye} · SPH {formatDiopter(r.sph)} · CYL {formatDiopter(r.cyl)}
                   </Badge>
                 </div>
                 <p className="text-2xl font-bold text-price">{formatPrice(r.price)}</p>
@@ -235,7 +288,7 @@ function ItemsSearch() {
                   <span className="rounded-md bg-muted px-2 py-1">{r.category}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Sizes: {r.allSizes.join(", ")} · Added{" "}
+                  Available: {r.allSizes.join(" | ")} · Added{" "}
                   {new Date(r.created_at).toLocaleDateString()}
                 </p>
               </div>
@@ -249,17 +302,19 @@ function ItemsSearch() {
               <TableRow>
                 <TableHead>Item</TableHead>
                 <TableHead>Code</TableHead>
-                <TableHead>Size</TableHead>
+                <TableHead>Eye</TableHead>
+                <TableHead>SPH</TableHead>
+                <TableHead>CYL</TableHead>
                 <TableHead>Supplier</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead>Available sizes</TableHead>
+                <TableHead>Available lenses</TableHead>
                 <TableHead>Added</TableHead>
                 <TableHead className="text-right">Price</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {results.map((r) => (
-                <TableRow key={`${r.itemId}-${r.size}-row`}>
+                <TableRow key={`${r.sizeId}-row`}>
                   <TableCell>
                     <Link
                       to="/items/$id"
@@ -280,11 +335,15 @@ function ItemsSearch() {
                   </TableCell>
                   <TableCell className="text-muted-foreground">{r.sku}</TableCell>
                   <TableCell>
-                    <Badge variant="secondary">{r.size}</Badge>
+                    <Badge variant={r.eye === "R" ? "default" : "secondary"}>{r.eye}</Badge>
                   </TableCell>
+                  <TableCell className="tabular-nums">{formatDiopter(r.sph)}</TableCell>
+                  <TableCell className="tabular-nums">{formatDiopter(r.cyl)}</TableCell>
                   <TableCell>{r.supplier}</TableCell>
                   <TableCell>{r.category}</TableCell>
-                  <TableCell className="text-muted-foreground">{r.allSizes.join(", ")}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {r.allSizes.join(" | ")}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(r.created_at).toLocaleDateString()}
                   </TableCell>
