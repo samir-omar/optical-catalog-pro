@@ -58,7 +58,7 @@ function ItemDetails() {
 
   const sizes = db.sizes
     .filter((s) => s.item_id === item.id)
-    .sort((a, b) => Number(a.size) - Number(b.size));
+    .sort((a, b) => (a.eye === b.eye ? a.sph - b.sph : a.eye === "R" ? -1 : 1));
   const supplier = db.suppliers.find((s) => s.id === item.supplier_id)?.name ?? "—";
   const category = db.categories.find((c) => c.id === item.customer_category_id)?.name ?? "—";
 
