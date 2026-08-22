@@ -65,7 +65,7 @@ function ItemsSearch() {
       itemId: string;
       name: string;
       sku: string;
-      image?: string;
+      image?: string | undefined;
       sizeId: string;
       eye: Eye;
       sph: number;
