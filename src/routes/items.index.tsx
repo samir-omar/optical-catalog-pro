@@ -302,10 +302,12 @@ function ItemsSearch() {
               <TableRow>
                 <TableHead>Item</TableHead>
                 <TableHead>Code</TableHead>
-                <TableHead>Size</TableHead>
+                <TableHead>Eye</TableHead>
+                <TableHead>SPH</TableHead>
+                <TableHead>CYL</TableHead>
                 <TableHead>Supplier</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead>Available sizes</TableHead>
+                <TableHead>Available lenses</TableHead>
                 <TableHead>Added</TableHead>
                 <TableHead className="text-right">Price</TableHead>
               </TableRow>
