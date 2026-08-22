@@ -55,7 +55,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setDb(loadDb());
-    setCurrentUser(window.localStorage.getItem(SESSION_KEY));
     setReady(true);
   }, []);
 
