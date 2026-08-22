@@ -335,11 +335,15 @@ function ItemsSearch() {
                   </TableCell>
                   <TableCell className="text-muted-foreground">{r.sku}</TableCell>
                   <TableCell>
-                    <Badge variant="secondary">{r.size}</Badge>
+                    <Badge variant={r.eye === "R" ? "default" : "secondary"}>{r.eye}</Badge>
                   </TableCell>
+                  <TableCell className="tabular-nums">{formatDiopter(r.sph)}</TableCell>
+                  <TableCell className="tabular-nums">{formatDiopter(r.cyl)}</TableCell>
                   <TableCell>{r.supplier}</TableCell>
                   <TableCell>{r.category}</TableCell>
-                  <TableCell className="text-muted-foreground">{r.allSizes.join(", ")}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {r.allSizes.join(" | ")}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(r.created_at).toLocaleDateString()}
                   </TableCell>
