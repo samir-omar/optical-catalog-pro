@@ -275,8 +275,11 @@ function ItemsSearch() {
                     <h3 className="truncate font-semibold">{r.name}</h3>
                     <p className="text-xs text-muted-foreground">{r.sku}</p>
                   </div>
-                  <Badge variant="secondary" className="shrink-0 text-sm">
-                    Size {r.size}
+                  <Badge
+                    variant={r.eye === "R" ? "default" : "secondary"}
+                    className="shrink-0 text-sm"
+                  >
+                    {r.eye} · SPH {formatDiopter(r.sph)} · CYL {formatDiopter(r.cyl)}
                   </Badge>
                 </div>
                 <p className="text-2xl font-bold text-price">{formatPrice(r.price)}</p>
