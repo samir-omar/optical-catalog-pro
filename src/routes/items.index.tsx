@@ -288,7 +288,7 @@ function ItemsSearch() {
                   <span className="rounded-md bg-muted px-2 py-1">{r.category}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Sizes: {r.allSizes.join(", ")} · Added{" "}
+                  Available: {r.allSizes.join(" | ")} · Added{" "}
                   {new Date(r.created_at).toLocaleDateString()}
                 </p>
               </div>
