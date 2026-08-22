@@ -25,10 +25,10 @@ const CARDS = [
   {
     to: "/items",
     title: "Items",
-    text: "Search the catalog by size and see prices instantly.",
+    text: "Search by eye, SPH and CYL and see prices instantly.",
     icon: Search,
   },
-  { to: "/add-item", title: "Add Items", text: "Add and manage glasses with sizes and prices.", icon: PlusSquare },
+  { to: "/add-item", title: "Add Items", text: "Add and manage glasses with lens powers and prices.", icon: PlusSquare },
   { to: "/categories", title: "Customers", text: "Manage customer categories for frames.", icon: Users },
   { to: "/settings", title: "Settings", text: "Logo, name, background, theme and users.", icon: Settings },
 ] as const;
@@ -40,7 +40,7 @@ function Dashboard() {
     { label: "Total Items", value: db.items.length, icon: Layers },
     { label: "Total Suppliers", value: db.suppliers.length, icon: Building2 },
     { label: "Customer Categories", value: db.categories.length, icon: Tags },
-    { label: "Size / Price Records", value: db.sizes.length, icon: Search },
+    { label: "Lens Price Records", value: db.sizes.length, icon: Search },
   ];
 
   return (
