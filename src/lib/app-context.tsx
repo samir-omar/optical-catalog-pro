@@ -38,6 +38,9 @@ interface AppContextValue {
   // categories
   saveCategory: (c: Omit<CustomerCategory, "created_at"> & { created_at?: string | undefined }) => string | null;
   deleteCategory: (id: string) => string | null;
+  // lens types
+  saveLensType: (l: Omit<LensType, "created_at"> & { created_at?: string | undefined }) => string | null;
+  deleteLensType: (id: string) => string | null;
   // items
   saveItem: (
     item: Omit<Item, "created_at" | "updated_at"> & { created_at?: string | undefined },
