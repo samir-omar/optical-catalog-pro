@@ -1,6 +1,6 @@
-import type { Database, Eye } from "./types";
+import type { Database, Eye, ProductKind } from "./types";
 
-const STORAGE_KEY = "optic-catalog-db-v2";
+const STORAGE_KEY = "optic-catalog-db-v3";
 
 export const hashPassword = (pw: string) =>
   typeof window === "undefined" ? pw : btoa(`optic::${pw}`);
@@ -15,6 +15,20 @@ export const formatDiopter = (n: number) =>
   `${n > 0 ? "+" : n < 0 ? "-" : ""}${Math.abs(n).toFixed(2)}`;
 
 export const eyeLabel = (eye: Eye) => (eye === "R" ? "Right (R)" : "Left (L)");
+
+export const KINDS: Array<{ value: ProductKind; label: string; short: string }> = [
+  { value: "lens", label: "Lenses only", short: "Lenses" },
+  { value: "frame", label: "Frame only", short: "Frame" },
+  { value: "frame_lens", label: "Frame with lenses", short: "Frame + Lenses" },
+];
+
+export const kindLabel = (k: ProductKind) =>
+  KINDS.find((x) => x.value === k)?.label ?? "Frame only";
+
+export const kindShort = (k: ProductKind) => KINDS.find((x) => x.value === k)?.short ?? "Frame";
+
+/** Frame-only records have a single price, everything else is priced per lens. */
+export const hasLensPowers = (k: ProductKind) => k !== "frame";
 
 export const lensLabel = (s: { eye: Eye; sph: number; cyl: number }) =>
   `${s.eye} · SPH ${formatDiopter(s.sph)} · CYL ${formatDiopter(s.cyl)}`;
@@ -37,16 +51,27 @@ function seed(): Database {
   const catKids = { id: uid(), name: "Kids", description: "Children frames", created_at: now() };
   const catSport = { id: uid(), name: "Sports", description: "Sport and outdoor", created_at: now() };
 
+  const ltWhite = { id: uid(), name: "White (CR-39)", description: "Standard clear lens", created_at: now() };
+  const ltBlue = { id: uid(), name: "Blue Cut", description: "Blue light filter", created_at: now() };
+  const ltPhoto = { id: uid(), name: "Photochromic", description: "Darkens in sunlight", created_at: now() };
+  const ltProg = { id: uid(), name: "Progressive", description: "Multifocal lens", created_at: now() };
+
   const mk = (
     name: string,
     sku: string,
+    kind: ProductKind,
     supplier_id: string,
     customer_category_id: string,
     notes: string,
+    lens_type_id?: string,
+    price?: number,
   ) => ({
     id: uid(),
     name,
     sku,
+    kind,
+    lens_type_id,
+    price,
     supplier_id,
     customer_category_id,
     notes,
@@ -54,10 +79,12 @@ function seed(): Database {
     updated_at: now(),
   });
 
-  const i1 = mk("Ray Model A", "RAY-A-001", supA.id, catMen.id, "Metal frame, matte black");
-  const i2 = mk("Aurora Classic", "AUR-C-014", supB.id, catWomen.id, "Acetate, rose gold detail");
-  const i3 = mk("Junior Flex", "JUN-F-220", supC.id, catKids.id, "Flexible TR90 frame");
-  const i4 = mk("Trail Sport", "TRL-S-031", supA.id, catSport.id, "Wrap-around sport frame");
+  const i1 = mk("Ray Model A", "RAY-A-001", "frame_lens", supA.id, catMen.id, "Metal frame, matte black", ltWhite.id);
+  const i2 = mk("Aurora Classic", "AUR-C-014", "frame_lens", supB.id, catWomen.id, "Acetate, rose gold detail", ltBlue.id);
+  const i3 = mk("Junior Flex", "JUN-F-220", "lens", supC.id, catKids.id, "Kids lenses", ltPhoto.id);
+  const i4 = mk("Trail Sport", "TRL-S-031", "lens", supA.id, catSport.id, "Sport lenses", ltProg.id);
+  const i5 = mk("Metro Frame", "MET-F-100", "frame", supB.id, catMen.id, "Frame only, titanium", undefined, 1200);
+  const i6 = mk("Bella Frame", "BEL-F-210", "frame", supC.id, catWomen.id, "Frame only, acetate", undefined, 850);
 
   const sizes = (
     [
@@ -90,7 +117,8 @@ function seed(): Database {
     ],
     suppliers: [supA, supB, supC],
     categories: [catMen, catWomen, catKids, catSport],
-    items: [i1, i2, i3, i4],
+    lens_types: [ltWhite, ltBlue, ltPhoto, ltProg],
+    items: [i1, i2, i3, i4, i5, i6],
     sizes,
     settings: {
       application_name: "OptiPrice Catalog",
@@ -110,7 +138,13 @@ export function loadDb(): Database {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
       return fresh;
     }
-    return JSON.parse(raw) as Database;
+    const parsed = JSON.parse(raw) as Database;
+    // Defensive defaults for databases saved before lens types existed.
+    return {
+      ...parsed,
+      lens_types: parsed.lens_types ?? [],
+      items: (parsed.items ?? []).map((i) => ({ ...i, kind: i.kind ?? "frame_lens" })),
+    };
   } catch {
     return seed();
   }

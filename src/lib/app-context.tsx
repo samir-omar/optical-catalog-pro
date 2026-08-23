@@ -14,6 +14,7 @@ import type {
   Database,
   Item,
   ItemSize,
+  LensType,
   Supplier,
   User,
 } from "./types";
@@ -37,6 +38,9 @@ interface AppContextValue {
   // categories
   saveCategory: (c: Omit<CustomerCategory, "created_at"> & { created_at?: string | undefined }) => string | null;
   deleteCategory: (id: string) => string | null;
+  // lens types
+  saveLensType: (l: Omit<LensType, "created_at"> & { created_at?: string | undefined }) => string | null;
+  deleteLensType: (id: string) => string | null;
   // items
   saveItem: (
     item: Omit<Item, "created_at" | "updated_at"> & { created_at?: string | undefined },
@@ -193,6 +197,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return null;
     };
 
+    const saveLensType: AppContextValue["saveLensType"] = (l) => {
+      if (!l.name.trim()) return "Lens type name is required.";
+      if (
+        db.lens_types.some(
+          (x) => x.id !== l.id && x.name.toLowerCase() === l.name.trim().toLowerCase(),
+        )
+      )
+        return "A lens type with this name already exists.";
+      const exists = db.lens_types.some((x) => x.id === l.id);
+      const record: LensType = {
+        id: l.id || uid(),
+        name: l.name.trim(),
+        description: l.description,
+        created_at: l.created_at ?? new Date().toISOString(),
+      };
+      commit({
+        ...db,
+        lens_types: exists
+          ? db.lens_types.map((x) => (x.id === record.id ? record : x))
+          : [...db.lens_types, record],
+      });
+      return null;
+    };
+
+    const deleteLensType = (id: string) => {
+      if (db.items.some((i) => i.lens_type_id === id))
+        return "This lens type is used by existing items.";
+      commit({ ...db, lens_types: db.lens_types.filter((l) => l.id !== id) });
+      return null;
+    };
+
     const saveItem: AppContextValue["saveItem"] = (item, sizes) => {
       if (!item.name.trim()) return "Item name is required.";
       if (!item.sku.trim()) return "Item code (SKU) is required.";
@@ -202,18 +237,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
         )
       )
         return "This item code (SKU) already exists.";
+      if (!item.kind) return "Choose what this record is: lenses, frame, or frame with lenses.";
       if (!item.supplier_id) return "Supplier is required.";
       if (!item.customer_category_id) return "Customer category is required.";
-      if (sizes.length === 0) return "Add at least one lens (eye + SPH + CYL) with its price.";
-      if (sizes.some((s) => s.eye !== "R" && s.eye !== "L"))
-        return "Each lens must be assigned to the right (R) or left (L) eye.";
-      if (sizes.some((s) => !Number.isFinite(s.sph) || !Number.isFinite(s.cyl)))
-        return "SPH and CYL must be valid numbers.";
-      const normalized = sizes.map((s) => `${s.eye}|${s.sph}|${s.cyl}`);
-      if (new Set(normalized).size !== normalized.length)
-        return "This eye already has the same SPH and CYL for this item.";
-      if (sizes.some((s) => !Number.isFinite(s.price) || s.price <= 0))
-        return "Price must be a valid positive number.";
+
+      const withLenses = item.kind !== "frame";
+      if (!withLenses) {
+        if (!Number.isFinite(item.price ?? NaN) || (item.price ?? 0) <= 0)
+          return "Frame price must be a valid positive number.";
+      } else {
+        if (!item.lens_type_id) return "Lens type is required.";
+        if (sizes.length === 0) return "Add at least one lens (eye + SPH + CYL) with its price.";
+        if (sizes.some((s) => s.eye !== "R" && s.eye !== "L"))
+          return "Each lens must be assigned to the right (R) or left (L) eye.";
+        if (sizes.some((s) => !Number.isFinite(s.sph) || !Number.isFinite(s.cyl)))
+          return "SPH and CYL must be valid numbers.";
+        const normalized = sizes.map((s) => `${s.eye}|${s.sph}|${s.cyl}`);
+        if (new Set(normalized).size !== normalized.length)
+          return "This eye already has the same SPH and CYL for this item.";
+        if (sizes.some((s) => !Number.isFinite(s.price) || s.price <= 0))
+          return "Price must be a valid positive number.";
+      }
 
       const exists = db.items.some((i) => i.id === item.id);
       const stamp = new Date().toISOString();
@@ -222,10 +266,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         id: item.id || uid(),
         name: item.name.trim(),
         sku: item.sku.trim(),
+        lens_type_id: withLenses ? item.lens_type_id : undefined,
+        price: withLenses ? undefined : item.price,
         created_at: item.created_at ?? stamp,
         updated_at: stamp,
       };
-      const newSizes: ItemSize[] = sizes.map((s) => ({
+      const newSizes: ItemSize[] = (withLenses ? sizes : []).map((s) => ({
         id: s.id || uid(),
         item_id: record.id,
         eye: s.eye,
@@ -265,6 +311,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       deleteSupplier,
       saveCategory,
       deleteCategory,
+      saveLensType,
+      deleteLensType,
       saveItem,
       deleteItem,
       updateSettings,
