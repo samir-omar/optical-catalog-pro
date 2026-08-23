@@ -14,6 +14,7 @@ import type {
   Database,
   Item,
   ItemSize,
+  LensType,
   Supplier,
   User,
 } from "./types";
