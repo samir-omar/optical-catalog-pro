@@ -14,6 +14,7 @@ import { Route as AddItemRouteImport } from './routes/add-item'
 import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ItemsRouteImport } from './routes/items'
+import { Route as LensTypesRouteImport } from './routes/lens-types'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SuppliersRouteImport } from './routes/suppliers'
 import { Route as ItemsIndexRouteImport } from './routes/items.index'
@@ -44,6 +45,11 @@ const ItemsRoute = ItemsRouteImport.update({
   path: '/items',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LensTypesRoute = LensTypesRouteImport.update({
+  id: '/lens-types',
+  path: '/lens-types',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/categories': typeof CategoriesRoute
   '/dashboard': typeof DashboardRoute
   '/items': typeof ItemsRouteWithChildren
+  '/lens-types': typeof LensTypesRoute
   '/settings': typeof SettingsRoute
   '/suppliers': typeof SuppliersRoute
   '/items/$id': typeof ItemsIdRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/add-item': typeof AddItemRoute
   '/categories': typeof CategoriesRoute
   '/dashboard': typeof DashboardRoute
+  '/lens-types': typeof LensTypesRoute
   '/settings': typeof SettingsRoute
   '/suppliers': typeof SuppliersRoute
   '/items/$id': typeof ItemsIdRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/categories': typeof CategoriesRoute
   '/dashboard': typeof DashboardRoute
   '/items': typeof ItemsRouteWithChildren
+  '/lens-types': typeof LensTypesRoute
   '/settings': typeof SettingsRoute
   '/suppliers': typeof SuppliersRoute
   '/items/$id': typeof ItemsIdRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/categories'
     | '/dashboard'
     | '/items'
+    | '/lens-types'
     | '/settings'
     | '/suppliers'
     | '/items/$id'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/add-item'
     | '/categories'
     | '/dashboard'
+    | '/lens-types'
     | '/settings'
     | '/suppliers'
     | '/items/$id'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/categories'
     | '/dashboard'
     | '/items'
+    | '/lens-types'
     | '/settings'
     | '/suppliers'
     | '/items/$id'
@@ -139,6 +151,7 @@ export interface RootRouteChildren {
   CategoriesRoute: typeof CategoriesRoute
   DashboardRoute: typeof DashboardRoute
   ItemsRoute: typeof ItemsRouteWithChildren
+  LensTypesRoute: typeof LensTypesRoute
   SettingsRoute: typeof SettingsRoute
   SuppliersRoute: typeof SuppliersRoute
 }
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       path: '/items'
       fullPath: '/items'
       preLoaderRoute: typeof ItemsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lens-types': {
+      id: '/lens-types'
+      path: '/lens-types'
+      fullPath: '/lens-types'
+      preLoaderRoute: typeof LensTypesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -229,6 +249,7 @@ const rootRouteChildren: RootRouteChildren = {
   CategoriesRoute: CategoriesRoute,
   DashboardRoute: DashboardRoute,
   ItemsRoute: ItemsRouteWithChildren,
+  LensTypesRoute: LensTypesRoute,
   SettingsRoute: SettingsRoute,
   SuppliersRoute: SuppliersRoute,
 }
