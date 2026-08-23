@@ -311,6 +311,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       deleteSupplier,
       saveCategory,
       deleteCategory,
+      saveLensType,
+      deleteLensType,
       saveItem,
       deleteItem,
       updateSettings,
