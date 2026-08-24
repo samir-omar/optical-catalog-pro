@@ -106,6 +106,9 @@ function AddItemPage() {
     setCategoryId("");
     setNotes("");
     setImage(undefined);
+    setKind("frame_lens");
+    setLensTypeId("");
+    setFramePrice("");
     setRows([]);
     setError(null);
   };
