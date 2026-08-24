@@ -3,8 +3,8 @@ import { useMemo, useState } from "react";
 import { LayoutGrid, Rows3, Search, X } from "lucide-react";
 import { AppShell, ImagePlaceholder } from "@/components/app-shell";
 import { useApp } from "@/lib/app-context";
-import { formatDiopter, formatPrice, lensLabel, parseDiopter } from "@/lib/db";
-import type { Eye } from "@/lib/types";
+import { KINDS, formatDiopter, formatPrice, hasLensPowers, kindShort, lensLabel, parseDiopter } from "@/lib/db";
+import type { Eye, ProductKind } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,8 @@ function ItemsSearch() {
   const [text, setText] = useState("");
   const [supplier, setSupplier] = useState("all");
   const [category, setCategory] = useState("all");
+  const [kindFilter, setKindFilter] = useState<"all" | ProductKind>("all");
+  const [lensTypeFilter, setLensTypeFilter] = useState("all");
   const [view, setView] = useState<"cards" | "table">("cards");
 
   const results = useMemo(() => {
@@ -71,6 +73,8 @@ function ItemsSearch() {
       sph: number;
       cyl: number;
       price: number;
+      kind: ProductKind;
+      lensType: string;
       supplier: string;
       category: string;
       allSizes: string[];
@@ -78,6 +82,8 @@ function ItemsSearch() {
     }> = [];
 
     for (const item of db.items) {
+      if (kindFilter !== "all" && item.kind !== kindFilter) continue;
+      if (lensTypeFilter !== "all" && item.lens_type_id !== lensTypeFilter) continue;
       if (supplier !== "all" && item.supplier_id !== supplier) continue;
       if (category !== "all" && item.customer_category_id !== category) continue;
       if (t && !(item.name.toLowerCase().includes(t) || item.sku.toLowerCase().includes(t)))
@@ -99,6 +105,29 @@ function ItemsSearch() {
         db.suppliers.find((s) => s.id === item.supplier_id)?.name ?? "—";
       const categoryName =
         db.categories.find((c) => c.id === item.customer_category_id)?.name ?? "—";
+      const lensTypeName =
+        db.lens_types.find((l) => l.id === item.lens_type_id)?.name ?? "—";
+
+      if (!hasLensPowers(item.kind)) {
+        rows.push({
+          itemId: item.id,
+          name: item.name,
+          sku: item.sku,
+          image: item.image,
+          sizeId: item.id,
+          eye: "R",
+          sph: 0,
+          cyl: 0,
+          price: item.price ?? 0,
+          kind: item.kind,
+          lensType: lensTypeName,
+          supplier: supplierName,
+          category: categoryName,
+          allSizes: [],
+          created_at: item.created_at,
+        });
+        continue;
+      }
 
       for (const m of matching) {
         rows.push({
@@ -111,6 +140,8 @@ function ItemsSearch() {
           sph: m.sph,
           cyl: m.cyl,
           price: m.price,
+          kind: item.kind,
+          lensType: lensTypeName,
           supplier: supplierName,
           category: categoryName,
           allSizes: itemSizes.map((s) => lensLabel(s)),
@@ -119,15 +150,55 @@ function ItemsSearch() {
       }
     }
     return rows;
-  }, [db, sphQuery, cylQuery, eyeFilter, exact, text, supplier, category]);
+  }, [db, sphQuery, cylQuery, eyeFilter, exact, text, supplier, category, kindFilter, lensTypeFilter]);
 
   return (
     <AppShell title="Items" description="Search the catalog by eye, SPH and CYL">
       <div className="card-elevated p-6">
+        <Label className="text-sm font-medium">What are you looking for?</Label>
+        <div className="mt-2 grid gap-3 sm:grid-cols-4">
+          {[{ value: "all" as const, short: "Everything" }, ...KINDS].map((k) => (
+            <button
+              key={k.value}
+              type="button"
+              onClick={() => setKindFilter(k.value as "all" | ProductKind)}
+              className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-all hover:-translate-y-0.5 ${
+                kindFilter === k.value
+                  ? "border-accent bg-accent/10 ring-2 ring-accent"
+                  : "border-border bg-card"
+              }`}
+            >
+              {k.short}
+            </button>
+          ))}
+        </div>
+        {kindFilter !== "frame" ? (
+          <div className="mt-4 max-w-xs">
+            <Label className="text-sm font-medium">Lens type</Label>
+            <Select value={lensTypeFilter} onValueChange={setLensTypeFilter}>
+              <SelectTrigger className="mt-2">
+                <SelectValue placeholder="Lens type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All lens types</SelectItem>
+                {db.lens_types.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>
+                    {l.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="card-elevated mt-6 p-6">
+        <div className={kindFilter === "frame" ? "hidden" : ""}>
         <Label htmlFor="sph" className="text-sm font-medium">
           Search by Lens Power (SPH / CYL)
         </Label>
         <div className="mt-2 grid gap-3 lg:grid-cols-[1fr_1fr_170px_170px]">
+
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -190,6 +261,8 @@ function ItemsSearch() {
           </Button>
         </div>
 
+
+        </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           <Input
@@ -275,17 +348,25 @@ function ItemsSearch() {
                     <h3 className="truncate font-semibold">{r.name}</h3>
                     <p className="text-xs text-muted-foreground">{r.sku}</p>
                   </div>
-                  <Badge
-                    variant={r.eye === "R" ? "default" : "secondary"}
-                    className="shrink-0 text-sm"
-                  >
-                    {r.eye} · SPH {formatDiopter(r.sph)} · CYL {formatDiopter(r.cyl)}
-                  </Badge>
+                  {hasLensPowers(r.kind) ? (
+                    <Badge
+                      variant={r.eye === "R" ? "default" : "secondary"}
+                      className="shrink-0 text-sm"
+                    >
+                      {r.eye} · SPH {formatDiopter(r.sph)} · CYL {formatDiopter(r.cyl)}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="shrink-0 text-sm">Frame only</Badge>
+                  )}
                 </div>
                 <p className="text-2xl font-bold text-price">{formatPrice(r.price)}</p>
                 <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                   <span className="rounded-md bg-muted px-2 py-1">{r.supplier}</span>
                   <span className="rounded-md bg-muted px-2 py-1">{r.category}</span>
+                  <span className="rounded-md bg-muted px-2 py-1">{kindShort(r.kind)}</span>
+                  {r.lensType !== "—" ? (
+                    <span className="rounded-md bg-muted px-2 py-1">{r.lensType}</span>
+                  ) : null}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Available: {r.allSizes.join(" | ")} · Added{" "}
@@ -335,10 +416,18 @@ function ItemsSearch() {
                   </TableCell>
                   <TableCell className="text-muted-foreground">{r.sku}</TableCell>
                   <TableCell>
-                    <Badge variant={r.eye === "R" ? "default" : "secondary"}>{r.eye}</Badge>
+                    {hasLensPowers(r.kind) ? (
+                      <Badge variant={r.eye === "R" ? "default" : "secondary"}>{r.eye}</Badge>
+                    ) : (
+                      "—"
+                    )}
                   </TableCell>
-                  <TableCell className="tabular-nums">{formatDiopter(r.sph)}</TableCell>
-                  <TableCell className="tabular-nums">{formatDiopter(r.cyl)}</TableCell>
+                  <TableCell className="tabular-nums">
+                    {hasLensPowers(r.kind) ? formatDiopter(r.sph) : "—"}
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {hasLensPowers(r.kind) ? formatDiopter(r.cyl) : "—"}
+                  </TableCell>
                   <TableCell>{r.supplier}</TableCell>
                   <TableCell>{r.category}</TableCell>
                   <TableCell className="text-muted-foreground">

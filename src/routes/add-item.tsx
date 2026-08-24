@@ -85,7 +85,7 @@ function AddItemPage() {
   const [categoryId, setCategoryId] = useState("");
   const [notes, setNotes] = useState("");
   const [image, setImage] = useState<string | undefined>(undefined);
-  const [kind, setKind] = useState<ProductKind>("frame_lens");
+  const [kind, setKind] = useState<ProductKind | null>(null);
   const [lensTypeId, setLensTypeId] = useState("");
   const [framePrice, setFramePrice] = useState("");
   const [rows, setRows] = useState<SizeRow[]>([]);
@@ -96,6 +96,7 @@ function AddItemPage() {
   const [editingRow, setEditingRow] = useState<string | null>(null);
   const [draft, setDraft] = useState({ eye: "R" as Eye, sph: "", cyl: "", price: "" });
   const [error, setError] = useState<string | null>(null);
+  const withLenses = kind !== null && hasLensPowers(kind);
 
   const reset = () => {
     setItemId("");
@@ -106,7 +107,7 @@ function AddItemPage() {
     setCategoryId("");
     setNotes("");
     setImage(undefined);
-    setKind("frame_lens");
+    setKind(null);
     setLensTypeId("");
     setFramePrice("");
     setRows([]);
@@ -187,7 +188,10 @@ function AddItemPage() {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const withLenses = hasLensPowers(kind);
+    if (!kind) {
+      setError("Choose the product type first.");
+      return;
+    }
     const err = saveItem(
       {
         id: itemId,
@@ -221,27 +225,41 @@ function AddItemPage() {
       title={itemId ? "Edit Item" : "Add Items"}
       description="Every size stores its own fixed price"
     >
-      <form onSubmit={submit} className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+      <div className="card-elevated p-6">
+        <h2 className="text-lg font-semibold">Step 1 — What are you adding?</h2>
+        <p className="text-sm text-muted-foreground">
+          Choose the product type first, then the rest of the form opens.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          {KINDS.map((k) => (
+            <button
+              key={k.value}
+              type="button"
+              onClick={() => setKind(k.value)}
+              className={`rounded-xl border p-4 text-left transition-all hover:-translate-y-0.5 ${
+                kind === k.value
+                  ? "border-accent bg-accent/10 ring-2 ring-accent"
+                  : "border-border bg-card"
+              }`}
+            >
+              <span className="block font-semibold">{k.short}</span>
+              <span className="block text-xs text-muted-foreground">{k.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {kind === null ? (
+        <div className="card-elevated mt-6 p-10 text-center text-muted-foreground">
+          Select a product type above to continue.
+        </div>
+      ) : (
+      <form onSubmit={submit} className="mt-6 grid gap-6 xl:grid-cols-[1fr_1fr]">
         <div className="card-elevated space-y-5 p-6">
           <h2 className="text-lg font-semibold">Basic Information</h2>
 
-          <div className="space-y-2">
-            <Label>What is this record? *</Label>
-            <Select value={kind} onValueChange={(v) => setKind(v as ProductKind)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select product type" />
-              </SelectTrigger>
-              <SelectContent>
-                {KINDS.map((k) => (
-                  <SelectItem key={k.value} value={k.value}>
-                    {k.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
 
-          {hasLensPowers(kind) ? (
+          {withLenses ? (
             <div className="space-y-2">
               <Label>Lens Type *</Label>
               <Select value={lensTypeId} onValueChange={setLensTypeId}>
@@ -347,7 +365,9 @@ function AddItemPage() {
           </div>
         </div>
 
+        {withLenses ? (
         <div className="card-elevated space-y-4 p-6">
+
           <div>
             <h2 className="text-lg font-semibold">Lens Powers and Prices</h2>
             <p className="text-sm text-muted-foreground">
@@ -504,8 +524,16 @@ function AddItemPage() {
               )}
             </TableBody>
           </Table>
+        </div>
+        ) : null}
 
-          <div className="flex gap-3 pt-2">
+        <div className="card-elevated space-y-4 p-6 xl:col-span-2">
+          {!withLenses && error ? (
+            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          ) : null}
+          <div className="flex gap-3">
             <Button type="submit" size="lg" className="flex-1">
               {itemId ? "Save changes" : "Save item"}
             </Button>
@@ -522,6 +550,8 @@ function AddItemPage() {
           </div>
         </div>
       </form>
+      )}
+
 
       <div className="card-elevated mt-8 overflow-hidden">
         <div className="border-b border-border p-5">
