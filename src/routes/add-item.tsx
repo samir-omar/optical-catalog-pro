@@ -128,6 +128,9 @@ function AddItemPage() {
     setCategoryId(item.customer_category_id);
     setNotes(item.notes ?? "");
     setImage(item.image);
+    setKind(item.kind ?? "frame_lens");
+    setLensTypeId(item.lens_type_id ?? "");
+    setFramePrice(item.price != null ? String(item.price) : "");
     setRows(
       sortRows(
         db.sizes
