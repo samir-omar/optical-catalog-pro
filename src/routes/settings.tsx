@@ -275,7 +275,10 @@ function SettingsPage() {
                           size="sm"
                           onClick={() => {
                             const err = updateUser(u.id, editUsername, editPassword || undefined);
-                            if (err) return toast.error(err);
+                            if (err) {
+                              toast.error(err);
+                              return;
+                            }
                             setEditUserId("");
                             setEditPassword("");
                             toast.success("User updated");
