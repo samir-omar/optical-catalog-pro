@@ -3,8 +3,8 @@ import { useMemo, useState } from "react";
 import { LayoutGrid, Rows3, Search, X } from "lucide-react";
 import { AppShell, ImagePlaceholder } from "@/components/app-shell";
 import { useApp } from "@/lib/app-context";
-import { formatDiopter, formatPrice, lensLabel, parseDiopter } from "@/lib/db";
-import type { Eye } from "@/lib/types";
+import { KINDS, formatDiopter, formatPrice, hasLensPowers, kindShort, lensLabel, parseDiopter } from "@/lib/db";
+import type { Eye, ProductKind } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,8 @@ function ItemsSearch() {
   const [text, setText] = useState("");
   const [supplier, setSupplier] = useState("all");
   const [category, setCategory] = useState("all");
+  const [kindFilter, setKindFilter] = useState<"all" | ProductKind>("all");
+  const [lensTypeFilter, setLensTypeFilter] = useState("all");
   const [view, setView] = useState<"cards" | "table">("cards");
 
   const results = useMemo(() => {
@@ -71,6 +73,8 @@ function ItemsSearch() {
       sph: number;
       cyl: number;
       price: number;
+      kind: ProductKind;
+      lensType: string;
       supplier: string;
       category: string;
       allSizes: string[];
@@ -78,6 +82,8 @@ function ItemsSearch() {
     }> = [];
 
     for (const item of db.items) {
+      if (kindFilter !== "all" && item.kind !== kindFilter) continue;
+      if (lensTypeFilter !== "all" && item.lens_type_id !== lensTypeFilter) continue;
       if (supplier !== "all" && item.supplier_id !== supplier) continue;
       if (category !== "all" && item.customer_category_id !== category) continue;
       if (t && !(item.name.toLowerCase().includes(t) || item.sku.toLowerCase().includes(t)))
@@ -99,6 +105,29 @@ function ItemsSearch() {
         db.suppliers.find((s) => s.id === item.supplier_id)?.name ?? "—";
       const categoryName =
         db.categories.find((c) => c.id === item.customer_category_id)?.name ?? "—";
+      const lensTypeName =
+        db.lens_types.find((l) => l.id === item.lens_type_id)?.name ?? "—";
+
+      if (!hasLensPowers(item.kind)) {
+        rows.push({
+          itemId: item.id,
+          name: item.name,
+          sku: item.sku,
+          image: item.image,
+          sizeId: item.id,
+          eye: "R",
+          sph: 0,
+          cyl: 0,
+          price: item.price ?? 0,
+          kind: item.kind,
+          lensType: lensTypeName,
+          supplier: supplierName,
+          category: categoryName,
+          allSizes: [],
+          created_at: item.created_at,
+        });
+        continue;
+      }
 
       for (const m of matching) {
         rows.push({
@@ -111,6 +140,8 @@ function ItemsSearch() {
           sph: m.sph,
           cyl: m.cyl,
           price: m.price,
+          kind: item.kind,
+          lensType: lensTypeName,
           supplier: supplierName,
           category: categoryName,
           allSizes: itemSizes.map((s) => lensLabel(s)),
@@ -119,7 +150,7 @@ function ItemsSearch() {
       }
     }
     return rows;
-  }, [db, sphQuery, cylQuery, eyeFilter, exact, text, supplier, category]);
+  }, [db, sphQuery, cylQuery, eyeFilter, exact, text, supplier, category, kindFilter, lensTypeFilter]);
 
   return (
     <AppShell title="Items" description="Search the catalog by eye, SPH and CYL">
