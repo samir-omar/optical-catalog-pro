@@ -74,7 +74,10 @@ function SettingsPage() {
             <Input value={appName} onChange={(e) => setAppName(e.target.value)} />
             <Button
               onClick={() => {
-                if (!appName.trim()) return toast.error("Application name cannot be empty.");
+                if (!appName.trim()) {
+                  toast.error("Application name cannot be empty.");
+                  return;
+                }
                 updateSettings({ application_name: appName.trim() });
                 toast.success("Application name saved");
               }}
