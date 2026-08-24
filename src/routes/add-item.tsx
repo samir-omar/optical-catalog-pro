@@ -255,7 +255,7 @@ function AddItemPage() {
           <h2 className="text-lg font-semibold">Basic Information</h2>
 
 
-          {hasLensPowers(kind) ? (
+          {withLenses ? (
             <div className="space-y-2">
               <Label>Lens Type *</Label>
               <Select value={lensTypeId} onValueChange={setLensTypeId}>
