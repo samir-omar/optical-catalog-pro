@@ -192,7 +192,8 @@ function ItemsSearch() {
         ) : null}
       </div>
 
-      <div className={`card-elevated mt-6 p-6 ${kindFilter === "frame" ? "hidden" : ""}`}>
+      <div className="card-elevated mt-6 p-6">
+        <div className={kindFilter === "frame" ? "hidden" : ""}>
         <Label htmlFor="sph" className="text-sm font-medium">
           Search by Lens Power (SPH / CYL)
         </Label>
@@ -260,6 +261,8 @@ function ItemsSearch() {
           </Button>
         </div>
 
+
+        </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           <Input
@@ -356,6 +359,10 @@ function ItemsSearch() {
                 <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                   <span className="rounded-md bg-muted px-2 py-1">{r.supplier}</span>
                   <span className="rounded-md bg-muted px-2 py-1">{r.category}</span>
+                  <span className="rounded-md bg-muted px-2 py-1">{kindShort(r.kind)}</span>
+                  {r.lensType !== "—" ? (
+                    <span className="rounded-md bg-muted px-2 py-1">{r.lensType}</span>
+                  ) : null}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Available: {r.allSizes.join(" | ")} · Added{" "}
