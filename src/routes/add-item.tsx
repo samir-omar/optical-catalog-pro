@@ -85,6 +85,9 @@ function AddItemPage() {
   const [categoryId, setCategoryId] = useState("");
   const [notes, setNotes] = useState("");
   const [image, setImage] = useState<string | undefined>(undefined);
+  const [kind, setKind] = useState<ProductKind>("frame_lens");
+  const [lensTypeId, setLensTypeId] = useState("");
+  const [framePrice, setFramePrice] = useState("");
   const [rows, setRows] = useState<SizeRow[]>([]);
   const [newEye, setNewEye] = useState<Eye>("R");
   const [newSph, setNewSph] = useState("");
