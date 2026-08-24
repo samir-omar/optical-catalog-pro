@@ -520,8 +520,16 @@ function AddItemPage() {
               )}
             </TableBody>
           </Table>
+        </div>
+        ) : null}
 
-          <div className="flex gap-3 pt-2">
+        <div className="card-elevated space-y-4 p-6 xl:col-span-2">
+          {!withLenses && error ? (
+            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          ) : null}
+          <div className="flex gap-3">
             <Button type="submit" size="lg" className="flex-1">
               {itemId ? "Save changes" : "Save item"}
             </Button>
@@ -538,6 +546,8 @@ function AddItemPage() {
           </div>
         </div>
       </form>
+      )}
+
 
       <div className="card-elevated mt-8 overflow-hidden">
         <div className="border-b border-border p-5">
