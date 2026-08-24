@@ -4,8 +4,8 @@ import { Check, ImagePlus, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, ImagePlaceholder } from "@/components/app-shell";
 import { useApp } from "@/lib/app-context";
-import { formatDiopter, formatPrice, parseDiopter, uid } from "@/lib/db";
-import type { Eye } from "@/lib/types";
+import { KINDS, formatDiopter, formatPrice, hasLensPowers, parseDiopter, uid } from "@/lib/db";
+import type { Eye, ProductKind } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,7 +40,7 @@ import {
 
 export const Route = createFileRoute("/add-item")({
   validateSearch: (search: Record<string, unknown>) => ({
-    id: typeof search.id === "string" ? search.id : undefined,
+    id: typeof search["id"] === "string" ? (search["id"] as string) : undefined,
   }),
   head: () => ({
     meta: [
@@ -85,6 +85,9 @@ function AddItemPage() {
   const [categoryId, setCategoryId] = useState("");
   const [notes, setNotes] = useState("");
   const [image, setImage] = useState<string | undefined>(undefined);
+  const [kind, setKind] = useState<ProductKind>("frame_lens");
+  const [lensTypeId, setLensTypeId] = useState("");
+  const [framePrice, setFramePrice] = useState("");
   const [rows, setRows] = useState<SizeRow[]>([]);
   const [newEye, setNewEye] = useState<Eye>("R");
   const [newSph, setNewSph] = useState("");
@@ -103,6 +106,9 @@ function AddItemPage() {
     setCategoryId("");
     setNotes("");
     setImage(undefined);
+    setKind("frame_lens");
+    setLensTypeId("");
+    setFramePrice("");
     setRows([]);
     setError(null);
   };
@@ -122,6 +128,9 @@ function AddItemPage() {
     setCategoryId(item.customer_category_id);
     setNotes(item.notes ?? "");
     setImage(item.image);
+    setKind(item.kind ?? "frame_lens");
+    setLensTypeId(item.lens_type_id ?? "");
+    setFramePrice(item.price != null ? String(item.price) : "");
     setRows(
       sortRows(
         db.sizes
@@ -178,18 +187,22 @@ function AddItemPage() {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    const withLenses = hasLensPowers(kind);
     const err = saveItem(
       {
         id: itemId,
         name,
         sku,
         image,
+        kind,
+        lens_type_id: withLenses ? lensTypeId || undefined : undefined,
+        price: withLenses ? undefined : Number(framePrice),
         supplier_id: supplierId,
         customer_category_id: categoryId,
         notes,
         created_at: createdAt,
       },
-      rows,
+      withLenses ? rows : [],
     );
     if (err) {
       setError(err);
@@ -211,6 +224,51 @@ function AddItemPage() {
       <form onSubmit={submit} className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         <div className="card-elevated space-y-5 p-6">
           <h2 className="text-lg font-semibold">Basic Information</h2>
+
+          <div className="space-y-2">
+            <Label>What is this record? *</Label>
+            <Select value={kind} onValueChange={(v) => setKind(v as ProductKind)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select product type" />
+              </SelectTrigger>
+              <SelectContent>
+                {KINDS.map((k) => (
+                  <SelectItem key={k.value} value={k.value}>
+                    {k.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {hasLensPowers(kind) ? (
+            <div className="space-y-2">
+              <Label>Lens Type *</Label>
+              <Select value={lensTypeId} onValueChange={setLensTypeId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select lens type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {db.lens_types.map((l) => (
+                    <SelectItem key={l.id} value={l.id}>
+                      {l.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="frame-price">Frame Price (EGP) *</Label>
+              <Input
+                id="frame-price"
+                inputMode="decimal"
+                value={framePrice}
+                onChange={(e) => setFramePrice(e.target.value)}
+              />
+            </div>
+          )}
+
 
           <div className="space-y-2">
             <Label htmlFor="name">Item Name *</Label>
@@ -456,7 +514,7 @@ function AddItemPage() {
                 type="button"
                 variant="outline"
                 size="lg"
-                onClick={() => navigate({ to: "/add-item", search: {} })}
+                onClick={() => navigate({ to: "/add-item", search: { id: undefined } })}
               >
                 Cancel edit
               </Button>

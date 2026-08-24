@@ -74,7 +74,10 @@ function SettingsPage() {
             <Input value={appName} onChange={(e) => setAppName(e.target.value)} />
             <Button
               onClick={() => {
-                if (!appName.trim()) return toast.error("Application name cannot be empty.");
+                if (!appName.trim()) {
+                  toast.error("Application name cannot be empty.");
+                  return;
+                }
                 updateSettings({ application_name: appName.trim() });
                 toast.success("Application name saved");
               }}
@@ -215,7 +218,10 @@ function SettingsPage() {
             <Button
               onClick={() => {
                 const err = addUser(newUsername, newPassword);
-                if (err) return toast.error(err);
+                if (err) {
+                  toast.error(err);
+                  return;
+                }
                 setNewUsername("");
                 setNewPassword("");
                 toast.success("User created");
@@ -269,7 +275,10 @@ function SettingsPage() {
                           size="sm"
                           onClick={() => {
                             const err = updateUser(u.id, editUsername, editPassword || undefined);
-                            if (err) return toast.error(err);
+                            if (err) {
+                              toast.error(err);
+                              return;
+                            }
                             setEditUserId("");
                             setEditPassword("");
                             toast.success("User updated");
