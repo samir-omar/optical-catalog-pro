@@ -218,7 +218,10 @@ function SettingsPage() {
             <Button
               onClick={() => {
                 const err = addUser(newUsername, newPassword);
-                if (err) return toast.error(err);
+                if (err) {
+                  toast.error(err);
+                  return;
+                }
                 setNewUsername("");
                 setNewPassword("");
                 toast.success("User created");
