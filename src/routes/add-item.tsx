@@ -85,7 +85,7 @@ function AddItemPage() {
   const [categoryId, setCategoryId] = useState("");
   const [notes, setNotes] = useState("");
   const [image, setImage] = useState<string | undefined>(undefined);
-  const [kind, setKind] = useState<ProductKind>("frame_lens");
+  const [kind, setKind] = useState<ProductKind | null>(null);
   const [lensTypeId, setLensTypeId] = useState("");
   const [framePrice, setFramePrice] = useState("");
   const [rows, setRows] = useState<SizeRow[]>([]);
@@ -96,6 +96,7 @@ function AddItemPage() {
   const [editingRow, setEditingRow] = useState<string | null>(null);
   const [draft, setDraft] = useState({ eye: "R" as Eye, sph: "", cyl: "", price: "" });
   const [error, setError] = useState<string | null>(null);
+  const withLenses = kind !== null && hasLensPowers(kind);
 
   const reset = () => {
     setItemId("");
@@ -106,7 +107,7 @@ function AddItemPage() {
     setCategoryId("");
     setNotes("");
     setImage(undefined);
-    setKind("frame_lens");
+    setKind(null);
     setLensTypeId("");
     setFramePrice("");
     setRows([]);
@@ -187,7 +188,10 @@ function AddItemPage() {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const withLenses = hasLensPowers(kind);
+    if (!kind) {
+      setError("Choose the product type first.");
+      return;
+    }
     const err = saveItem(
       {
         id: itemId,
