@@ -226,6 +226,51 @@ function AddItemPage() {
           <h2 className="text-lg font-semibold">Basic Information</h2>
 
           <div className="space-y-2">
+            <Label>What is this record? *</Label>
+            <Select value={kind} onValueChange={(v) => setKind(v as ProductKind)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select product type" />
+              </SelectTrigger>
+              <SelectContent>
+                {KINDS.map((k) => (
+                  <SelectItem key={k.value} value={k.value}>
+                    {k.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {hasLensPowers(kind) ? (
+            <div className="space-y-2">
+              <Label>Lens Type *</Label>
+              <Select value={lensTypeId} onValueChange={setLensTypeId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select lens type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {db.lens_types.map((l) => (
+                    <SelectItem key={l.id} value={l.id}>
+                      {l.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="frame-price">Frame Price (EGP) *</Label>
+              <Input
+                id="frame-price"
+                inputMode="decimal"
+                value={framePrice}
+                onChange={(e) => setFramePrice(e.target.value)}
+              />
+            </div>
+          )}
+
+
+          <div className="space-y-2">
             <Label htmlFor="name">Item Name *</Label>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
