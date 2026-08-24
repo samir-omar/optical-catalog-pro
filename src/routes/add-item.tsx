@@ -40,7 +40,7 @@ import {
 
 export const Route = createFileRoute("/add-item")({
   validateSearch: (search: Record<string, unknown>) => ({
-    id: typeof search.id === "string" ? search.id : undefined,
+    id: typeof search["id"] === "string" ? (search["id"] as string) : undefined,
   }),
   head: () => ({
     meta: [
