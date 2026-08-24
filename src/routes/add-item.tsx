@@ -187,18 +187,22 @@ function AddItemPage() {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    const withLenses = hasLensPowers(kind);
     const err = saveItem(
       {
         id: itemId,
         name,
         sku,
         image,
+        kind,
+        lens_type_id: withLenses ? lensTypeId || undefined : undefined,
+        price: withLenses ? undefined : Number(framePrice),
         supplier_id: supplierId,
         customer_category_id: categoryId,
         notes,
         created_at: createdAt,
       },
-      rows,
+      withLenses ? rows : [],
     );
     if (err) {
       setError(err);
