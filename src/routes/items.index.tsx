@@ -348,12 +348,16 @@ function ItemsSearch() {
                     <h3 className="truncate font-semibold">{r.name}</h3>
                     <p className="text-xs text-muted-foreground">{r.sku}</p>
                   </div>
-                  <Badge
-                    variant={r.eye === "R" ? "default" : "secondary"}
-                    className="shrink-0 text-sm"
-                  >
-                    {r.eye} · SPH {formatDiopter(r.sph)} · CYL {formatDiopter(r.cyl)}
-                  </Badge>
+                  {hasLensPowers(r.kind) ? (
+                    <Badge
+                      variant={r.eye === "R" ? "default" : "secondary"}
+                      className="shrink-0 text-sm"
+                    >
+                      {r.eye} · SPH {formatDiopter(r.sph)} · CYL {formatDiopter(r.cyl)}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="shrink-0 text-sm">Frame only</Badge>
+                  )}
                 </div>
                 <p className="text-2xl font-bold text-price">{formatPrice(r.price)}</p>
                 <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
@@ -412,10 +416,18 @@ function ItemsSearch() {
                   </TableCell>
                   <TableCell className="text-muted-foreground">{r.sku}</TableCell>
                   <TableCell>
-                    <Badge variant={r.eye === "R" ? "default" : "secondary"}>{r.eye}</Badge>
+                    {hasLensPowers(r.kind) ? (
+                      <Badge variant={r.eye === "R" ? "default" : "secondary"}>{r.eye}</Badge>
+                    ) : (
+                      "—"
+                    )}
                   </TableCell>
-                  <TableCell className="tabular-nums">{formatDiopter(r.sph)}</TableCell>
-                  <TableCell className="tabular-nums">{formatDiopter(r.cyl)}</TableCell>
+                  <TableCell className="tabular-nums">
+                    {hasLensPowers(r.kind) ? formatDiopter(r.sph) : "—"}
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {hasLensPowers(r.kind) ? formatDiopter(r.cyl) : "—"}
+                  </TableCell>
                   <TableCell>{r.supplier}</TableCell>
                   <TableCell>{r.category}</TableCell>
                   <TableCell className="text-muted-foreground">
