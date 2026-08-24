@@ -155,10 +155,49 @@ function ItemsSearch() {
   return (
     <AppShell title="Items" description="Search the catalog by eye, SPH and CYL">
       <div className="card-elevated p-6">
+        <Label className="text-sm font-medium">What are you looking for?</Label>
+        <div className="mt-2 grid gap-3 sm:grid-cols-4">
+          {[{ value: "all" as const, short: "Everything" }, ...KINDS].map((k) => (
+            <button
+              key={k.value}
+              type="button"
+              onClick={() => setKindFilter(k.value as "all" | ProductKind)}
+              className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-all hover:-translate-y-0.5 ${
+                kindFilter === k.value
+                  ? "border-accent bg-accent/10 ring-2 ring-accent"
+                  : "border-border bg-card"
+              }`}
+            >
+              {k.short}
+            </button>
+          ))}
+        </div>
+        {kindFilter !== "frame" ? (
+          <div className="mt-4 max-w-xs">
+            <Label className="text-sm font-medium">Lens type</Label>
+            <Select value={lensTypeFilter} onValueChange={setLensTypeFilter}>
+              <SelectTrigger className="mt-2">
+                <SelectValue placeholder="Lens type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All lens types</SelectItem>
+                {db.lens_types.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>
+                    {l.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
+      </div>
+
+      <div className={`card-elevated mt-6 p-6 ${kindFilter === "frame" ? "hidden" : ""}`}>
         <Label htmlFor="sph" className="text-sm font-medium">
           Search by Lens Power (SPH / CYL)
         </Label>
         <div className="mt-2 grid gap-3 lg:grid-cols-[1fr_1fr_170px_170px]">
+
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
