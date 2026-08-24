@@ -221,25 +221,39 @@ function AddItemPage() {
       title={itemId ? "Edit Item" : "Add Items"}
       description="Every size stores its own fixed price"
     >
-      <form onSubmit={submit} className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+      <div className="card-elevated p-6">
+        <h2 className="text-lg font-semibold">Step 1 — What are you adding?</h2>
+        <p className="text-sm text-muted-foreground">
+          Choose the product type first, then the rest of the form opens.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          {KINDS.map((k) => (
+            <button
+              key={k.value}
+              type="button"
+              onClick={() => setKind(k.value)}
+              className={`rounded-xl border p-4 text-left transition-all hover:-translate-y-0.5 ${
+                kind === k.value
+                  ? "border-accent bg-accent/10 ring-2 ring-accent"
+                  : "border-border bg-card"
+              }`}
+            >
+              <span className="block font-semibold">{k.short}</span>
+              <span className="block text-xs text-muted-foreground">{k.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {kind === null ? (
+        <div className="card-elevated mt-6 p-10 text-center text-muted-foreground">
+          Select a product type above to continue.
+        </div>
+      ) : (
+      <form onSubmit={submit} className="mt-6 grid gap-6 xl:grid-cols-[1fr_1fr]">
         <div className="card-elevated space-y-5 p-6">
           <h2 className="text-lg font-semibold">Basic Information</h2>
 
-          <div className="space-y-2">
-            <Label>What is this record? *</Label>
-            <Select value={kind} onValueChange={(v) => setKind(v as ProductKind)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select product type" />
-              </SelectTrigger>
-              <SelectContent>
-                {KINDS.map((k) => (
-                  <SelectItem key={k.value} value={k.value}>
-                    {k.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
 
           {hasLensPowers(kind) ? (
             <div className="space-y-2">
