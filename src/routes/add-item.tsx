@@ -514,7 +514,7 @@ function AddItemPage() {
                 type="button"
                 variant="outline"
                 size="lg"
-                onClick={() => navigate({ to: "/add-item", search: {} })}
+                onClick={() => navigate({ to: "/add-item", search: { id: undefined } })}
               >
                 Cancel edit
               </Button>
