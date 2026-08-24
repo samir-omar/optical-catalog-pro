@@ -361,7 +361,9 @@ function AddItemPage() {
           </div>
         </div>
 
+        {withLenses ? (
         <div className="card-elevated space-y-4 p-6">
+
           <div>
             <h2 className="text-lg font-semibold">Lens Powers and Prices</h2>
             <p className="text-sm text-muted-foreground">
