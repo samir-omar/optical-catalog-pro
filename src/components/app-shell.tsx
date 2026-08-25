@@ -19,6 +19,8 @@ const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/items", label: "Items", icon: Search },
   { to: "/add-item", label: "Add Items", icon: PlusSquare },
+  { to: "/lens-types", label: "Lens Types", icon: Circle },
+  { to: "/frame-types", label: "Frame Types", icon: Frame },
   { to: "/suppliers", label: "Suppliers", icon: Building2 },
   { to: "/categories", label: "Customers", icon: Users },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
