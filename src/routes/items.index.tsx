@@ -56,6 +56,7 @@ function ItemsSearch() {
   const [category, setCategory] = useState("all");
   const [kindFilter, setKindFilter] = useState<"all" | ProductKind>("all");
   const [lensTypeFilter, setLensTypeFilter] = useState("all");
+  const [frameTypeFilter, setFrameTypeFilter] = useState("all");
   const [view, setView] = useState<"cards" | "table">("cards");
 
   const results = useMemo(() => {
@@ -84,6 +85,7 @@ function ItemsSearch() {
     for (const item of db.items) {
       if (kindFilter !== "all" && item.kind !== kindFilter) continue;
       if (lensTypeFilter !== "all" && item.lens_type_id !== lensTypeFilter) continue;
+      if (frameTypeFilter !== "all" && item.frame_type_id !== frameTypeFilter) continue;
       if (supplier !== "all" && item.supplier_id !== supplier) continue;
       if (category !== "all" && item.customer_category_id !== category) continue;
       if (t && !(item.name.toLowerCase().includes(t) || item.sku.toLowerCase().includes(t)))
@@ -150,7 +152,7 @@ function ItemsSearch() {
       }
     }
     return rows;
-  }, [db, sphQuery, cylQuery, eyeFilter, exact, text, supplier, category, kindFilter, lensTypeFilter]);
+  }, [db, sphQuery, cylQuery, eyeFilter, exact, text, supplier, category, kindFilter, lensTypeFilter, frameTypeFilter]);
 
   return (
     <AppShell title="Items" description="Search the catalog by eye, SPH and CYL">
@@ -172,8 +174,9 @@ function ItemsSearch() {
             </button>
           ))}
         </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:max-w-2xl">
         {kindFilter !== "frame" ? (
-          <div className="mt-4 max-w-xs">
+          <div>
             <Label className="text-sm font-medium">Lens type</Label>
             <Select value={lensTypeFilter} onValueChange={setLensTypeFilter}>
               <SelectTrigger className="mt-2">
@@ -190,6 +193,25 @@ function ItemsSearch() {
             </Select>
           </div>
         ) : null}
+        {kindFilter !== "lens" ? (
+          <div>
+            <Label className="text-sm font-medium">Frame type</Label>
+            <Select value={frameTypeFilter} onValueChange={setFrameTypeFilter}>
+              <SelectTrigger className="mt-2">
+                <SelectValue placeholder="Frame type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All frame types</SelectItem>
+                {db.frame_types.map((f) => (
+                  <SelectItem key={f.id} value={f.id}>
+                    {f.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
+        </div>
       </div>
 
       <div className="card-elevated mt-6 p-6">
