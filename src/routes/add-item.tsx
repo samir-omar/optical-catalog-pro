@@ -260,22 +260,42 @@ function AddItemPage() {
 
 
           {withLenses ? (
-            <div className="space-y-2">
-              <Label>Lens Type *</Label>
-              <Select value={lensTypeId} onValueChange={setLensTypeId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select lens type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {db.lens_types.map((l) => (
-                    <SelectItem key={l.id} value={l.id}>
-                      {l.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ) : (
+            <TypeField
+              label="Lens Type *"
+              placeholder="Select lens type"
+              newPlaceholder="New lens type name"
+              options={db.lens_types}
+              value={lensTypeId}
+              onChange={setLensTypeId}
+              onCreate={(name) => {
+                const id = uid();
+                const err = saveLensType({ id, name });
+                if (err) return err;
+                setLensTypeId(id);
+                return null;
+              }}
+            />
+          ) : null}
+
+          {withFrame ? (
+            <TypeField
+              label="Frame Type *"
+              placeholder="Select frame type"
+              newPlaceholder="New frame type name"
+              options={db.frame_types}
+              value={frameTypeId}
+              onChange={setFrameTypeId}
+              onCreate={(name) => {
+                const id = uid();
+                const err = saveFrameType({ id, name });
+                if (err) return err;
+                setFrameTypeId(id);
+                return null;
+              }}
+            />
+          ) : null}
+
+          {withLenses ? null : (
             <div className="space-y-2">
               <Label htmlFor="frame-price">Frame Price (EGP) *</Label>
               <Input
