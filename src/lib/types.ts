@@ -28,6 +28,14 @@ export interface LensType {
   created_at: string;
 }
 
+/** Frame type (e.g. Metal, Acetate, Titanium) — it changes the price. */
+export interface FrameType {
+  id: string;
+  name: string;
+  description?: string | undefined;
+  created_at: string;
+}
+
 export type Eye = "R" | "L";
 
 /** What the catalog record actually is. */
@@ -50,6 +58,8 @@ export interface Item {
   kind: ProductKind;
   /** Required for lens and frame+lens records. */
   lens_type_id?: string | undefined;
+  /** Used by frame and frame+lens records. */
+  frame_type_id?: string | undefined;
   /** Fixed price used by frame-only records (no lens powers). */
   price?: number | undefined;
   supplier_id: string;
@@ -73,6 +83,7 @@ export interface Database {
   suppliers: Supplier[];
   categories: CustomerCategory[];
   lens_types: LensType[];
+  frame_types: FrameType[];
   items: Item[];
   sizes: ItemSize[];
   settings: AppSettings;
