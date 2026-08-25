@@ -1,6 +1,8 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Building2,
+  Circle,
+  Frame,
   Glasses,
   LayoutDashboard,
   LogOut,
