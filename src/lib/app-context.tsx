@@ -12,6 +12,7 @@ import type {
   AppSettings,
   CustomerCategory,
   Database,
+  FrameType,
   Item,
   ItemSize,
   LensType,
@@ -41,6 +42,9 @@ interface AppContextValue {
   // lens types
   saveLensType: (l: Omit<LensType, "created_at"> & { created_at?: string | undefined }) => string | null;
   deleteLensType: (id: string) => string | null;
+  // frame types
+  saveFrameType: (f: Omit<FrameType, "created_at"> & { created_at?: string | undefined }) => string | null;
+  deleteFrameType: (id: string) => string | null;
   // items
   saveItem: (
     item: Omit<Item, "created_at" | "updated_at"> & { created_at?: string | undefined },
@@ -228,6 +232,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return null;
     };
 
+    const saveFrameType: AppContextValue["saveFrameType"] = (f) => {
+      if (!f.name.trim()) return "Frame type name is required.";
+      if (
+        db.frame_types.some(
+          (x) => x.id !== f.id && x.name.toLowerCase() === f.name.trim().toLowerCase(),
+        )
+      )
+        return "A frame type with this name already exists.";
+      const exists = db.frame_types.some((x) => x.id === f.id);
+      const record: FrameType = {
+        id: f.id || uid(),
+        name: f.name.trim(),
+        description: f.description,
+        created_at: f.created_at ?? new Date().toISOString(),
+      };
+      commit({
+        ...db,
+        frame_types: exists
+          ? db.frame_types.map((x) => (x.id === record.id ? record : x))
+          : [...db.frame_types, record],
+      });
+      return null;
+    };
+
+    const deleteFrameType = (id: string) => {
+      if (db.items.some((i) => i.frame_type_id === id))
+        return "This frame type is used by existing items.";
+      commit({ ...db, frame_types: db.frame_types.filter((f) => f.id !== id) });
+      return null;
+    };
+
     const saveItem: AppContextValue["saveItem"] = (item, sizes) => {
       if (!item.name.trim()) return "Item name is required.";
       if (!item.sku.trim()) return "Item code (SKU) is required.";
@@ -267,6 +302,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         name: item.name.trim(),
         sku: item.sku.trim(),
         lens_type_id: withLenses ? item.lens_type_id : undefined,
+        frame_type_id: item.kind === "lens" ? undefined : item.frame_type_id,
         price: withLenses ? undefined : item.price,
         created_at: item.created_at ?? stamp,
         updated_at: stamp,
@@ -313,6 +349,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       deleteCategory,
       saveLensType,
       deleteLensType,
+      saveFrameType,
+      deleteFrameType,
       saveItem,
       deleteItem,
       updateSettings,

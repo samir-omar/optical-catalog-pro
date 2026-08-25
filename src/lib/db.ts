@@ -30,6 +30,9 @@ export const kindShort = (k: ProductKind) => KINDS.find((x) => x.value === k)?.s
 /** Frame-only records have a single price, everything else is priced per lens. */
 export const hasLensPowers = (k: ProductKind) => k !== "frame";
 
+/** Lens-only records have no frame, so no frame type. */
+export const hasFrame = (k: ProductKind) => k !== "lens";
+
 export const lensLabel = (s: { eye: Eye; sph: number; cyl: number }) =>
   `${s.eye} · SPH ${formatDiopter(s.sph)} · CYL ${formatDiopter(s.cyl)}`;
 
@@ -56,6 +59,10 @@ function seed(): Database {
   const ltPhoto = { id: uid(), name: "Photochromic", description: "Darkens in sunlight", created_at: now() };
   const ltProg = { id: uid(), name: "Progressive", description: "Multifocal lens", created_at: now() };
 
+  const ftMetal = { id: uid(), name: "Metal", description: "Metal frames", created_at: now() };
+  const ftAcetate = { id: uid(), name: "Acetate", description: "Acetate frames", created_at: now() };
+  const ftTitanium = { id: uid(), name: "Titanium", description: "Lightweight titanium", created_at: now() };
+
   const mk = (
     name: string,
     sku: string,
@@ -65,12 +72,14 @@ function seed(): Database {
     notes: string,
     lens_type_id?: string,
     price?: number,
+    frame_type_id?: string,
   ) => ({
     id: uid(),
     name,
     sku,
     kind,
     lens_type_id,
+    frame_type_id,
     price,
     supplier_id,
     customer_category_id,
@@ -79,12 +88,12 @@ function seed(): Database {
     updated_at: now(),
   });
 
-  const i1 = mk("Ray Model A", "RAY-A-001", "frame_lens", supA.id, catMen.id, "Metal frame, matte black", ltWhite.id);
-  const i2 = mk("Aurora Classic", "AUR-C-014", "frame_lens", supB.id, catWomen.id, "Acetate, rose gold detail", ltBlue.id);
+  const i1 = mk("Ray Model A", "RAY-A-001", "frame_lens", supA.id, catMen.id, "Metal frame, matte black", ltWhite.id, undefined, ftMetal.id);
+  const i2 = mk("Aurora Classic", "AUR-C-014", "frame_lens", supB.id, catWomen.id, "Acetate, rose gold detail", ltBlue.id, undefined, ftAcetate.id);
   const i3 = mk("Junior Flex", "JUN-F-220", "lens", supC.id, catKids.id, "Kids lenses", ltPhoto.id);
   const i4 = mk("Trail Sport", "TRL-S-031", "lens", supA.id, catSport.id, "Sport lenses", ltProg.id);
-  const i5 = mk("Metro Frame", "MET-F-100", "frame", supB.id, catMen.id, "Frame only, titanium", undefined, 1200);
-  const i6 = mk("Bella Frame", "BEL-F-210", "frame", supC.id, catWomen.id, "Frame only, acetate", undefined, 850);
+  const i5 = mk("Metro Frame", "MET-F-100", "frame", supB.id, catMen.id, "Frame only, titanium", undefined, 1200, ftTitanium.id);
+  const i6 = mk("Bella Frame", "BEL-F-210", "frame", supC.id, catWomen.id, "Frame only, acetate", undefined, 850, ftAcetate.id);
 
   const sizes = (
     [
@@ -118,6 +127,7 @@ function seed(): Database {
     suppliers: [supA, supB, supC],
     categories: [catMen, catWomen, catKids, catSport],
     lens_types: [ltWhite, ltBlue, ltPhoto, ltProg],
+    frame_types: [ftMetal, ftAcetate, ftTitanium],
     items: [i1, i2, i3, i4, i5, i6],
     sizes,
     settings: {
@@ -143,6 +153,7 @@ export function loadDb(): Database {
     return {
       ...parsed,
       lens_types: parsed.lens_types ?? [],
+      frame_types: parsed.frame_types ?? [],
       items: (parsed.items ?? []).map((i) => ({ ...i, kind: i.kind ?? "frame_lens" })),
     };
   } catch {

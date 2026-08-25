@@ -4,7 +4,7 @@ import { Check, ImagePlus, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, ImagePlaceholder } from "@/components/app-shell";
 import { useApp } from "@/lib/app-context";
-import { KINDS, formatDiopter, formatPrice, hasLensPowers, parseDiopter, uid } from "@/lib/db";
+import { KINDS, formatDiopter, formatPrice, hasFrame, hasLensPowers, parseDiopter, uid } from "@/lib/db";
 import type { Eye, ProductKind } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,7 +73,7 @@ const sortRows = (rows: SizeRow[]) =>
 
 function AddItemPage() {
   const { id: editId } = Route.useSearch();
-  const { db, saveItem, deleteItem } = useApp();
+  const { db, saveItem, deleteItem, saveLensType, saveFrameType } = useApp();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -87,6 +87,7 @@ function AddItemPage() {
   const [image, setImage] = useState<string | undefined>(undefined);
   const [kind, setKind] = useState<ProductKind | null>(null);
   const [lensTypeId, setLensTypeId] = useState("");
+  const [frameTypeId, setFrameTypeId] = useState("");
   const [framePrice, setFramePrice] = useState("");
   const [rows, setRows] = useState<SizeRow[]>([]);
   const [newEye, setNewEye] = useState<Eye>("R");
@@ -97,6 +98,7 @@ function AddItemPage() {
   const [draft, setDraft] = useState({ eye: "R" as Eye, sph: "", cyl: "", price: "" });
   const [error, setError] = useState<string | null>(null);
   const withLenses = kind !== null && hasLensPowers(kind);
+  const withFrame = kind !== null && hasFrame(kind);
 
   const reset = () => {
     setItemId("");
@@ -109,6 +111,7 @@ function AddItemPage() {
     setImage(undefined);
     setKind(null);
     setLensTypeId("");
+    setFrameTypeId("");
     setFramePrice("");
     setRows([]);
     setError(null);
@@ -131,6 +134,7 @@ function AddItemPage() {
     setImage(item.image);
     setKind(item.kind ?? "frame_lens");
     setLensTypeId(item.lens_type_id ?? "");
+    setFrameTypeId(item.frame_type_id ?? "");
     setFramePrice(item.price != null ? String(item.price) : "");
     setRows(
       sortRows(
@@ -200,6 +204,7 @@ function AddItemPage() {
         image,
         kind,
         lens_type_id: withLenses ? lensTypeId || undefined : undefined,
+        frame_type_id: withFrame ? frameTypeId || undefined : undefined,
         price: withLenses ? undefined : Number(framePrice),
         supplier_id: supplierId,
         customer_category_id: categoryId,
@@ -260,22 +265,42 @@ function AddItemPage() {
 
 
           {withLenses ? (
-            <div className="space-y-2">
-              <Label>Lens Type *</Label>
-              <Select value={lensTypeId} onValueChange={setLensTypeId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select lens type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {db.lens_types.map((l) => (
-                    <SelectItem key={l.id} value={l.id}>
-                      {l.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ) : (
+            <TypeField
+              label="Lens Type *"
+              placeholder="Select lens type"
+              newPlaceholder="New lens type name"
+              options={db.lens_types}
+              value={lensTypeId}
+              onChange={setLensTypeId}
+              onCreate={(name) => {
+                const id = uid();
+                const err = saveLensType({ id, name });
+                if (err) return err;
+                setLensTypeId(id);
+                return null;
+              }}
+            />
+          ) : null}
+
+          {withFrame ? (
+            <TypeField
+              label="Frame Type *"
+              placeholder="Select frame type"
+              newPlaceholder="New frame type name"
+              options={db.frame_types}
+              value={frameTypeId}
+              onChange={setFrameTypeId}
+              onCreate={(name) => {
+                const id = uid();
+                const err = saveFrameType({ id, name });
+                if (err) return err;
+                setFrameTypeId(id);
+                return null;
+              }}
+            />
+          ) : null}
+
+          {withLenses ? null : (
             <div className="space-y-2">
               <Label htmlFor="frame-price">Frame Price (EGP) *</Label>
               <Input
@@ -632,5 +657,89 @@ function AddItemPage() {
         </Table>
       </div>
     </AppShell>
+  );
+}
+
+function TypeField({
+  label,
+  placeholder,
+  newPlaceholder,
+  options,
+  value,
+  onChange,
+  onCreate,
+}: {
+  label: string;
+  placeholder: string;
+  newPlaceholder: string;
+  options: Array<{ id: string; name: string }>;
+  value: string;
+  onChange: (v: string) => void;
+  onCreate: (name: string) => string | null;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+
+  const create = () => {
+    const message = onCreate(draftName);
+    if (message) {
+      setErr(message);
+      return;
+    }
+    toast.success(`${draftName.trim()} added`);
+    setDraftName("");
+    setErr(null);
+    setAdding(false);
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <div className="flex gap-2">
+        <Select value={value} onValueChange={onChange}>
+          <SelectTrigger className="flex-1">
+            <SelectValue placeholder={placeholder} />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((o) => (
+              <SelectItem key={o.id} value={o.id}>
+                {o.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setAdding((a) => !a)}
+          aria-label="Add new type"
+        >
+          {adding ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+        </Button>
+      </div>
+      {adding ? (
+        <div className="space-y-2 rounded-lg border border-dashed border-border p-3">
+          <div className="flex gap-2">
+            <Input
+              autoFocus
+              placeholder={newPlaceholder}
+              value={draftName}
+              onChange={(e) => setDraftName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  create();
+                }
+              }}
+            />
+            <Button type="button" onClick={create}>
+              <Check className="h-4 w-4" />
+            </Button>
+          </div>
+          {err ? <p className="text-sm text-destructive">{err}</p> : null}
+        </div>
+      ) : null}
+    </div>
   );
 }
