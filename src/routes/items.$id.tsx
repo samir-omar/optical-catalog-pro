@@ -3,7 +3,7 @@ import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, ImagePlaceholder } from "@/components/app-shell";
 import { useApp } from "@/lib/app-context";
-import { formatDiopter, formatPrice } from "@/lib/db";
+import { eyeLabel, formatPrice, rangeLabel } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -58,7 +58,7 @@ function ItemDetails() {
 
   const sizes = db.sizes
     .filter((s) => s.item_id === item.id)
-    .sort((a, b) => (a.eye === b.eye ? a.sph - b.sph : a.eye === "R" ? -1 : 1));
+    .sort((a, b) => (a.eye === b.eye ? a.sph_min - b.sph_min : a.eye < b.eye ? -1 : 1));
   const supplier = db.suppliers.find((s) => s.id === item.supplier_id)?.name ?? "—";
   const category = db.categories.find((c) => c.id === item.customer_category_id)?.name ?? "—";
 
