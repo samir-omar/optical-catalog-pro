@@ -38,17 +38,32 @@ export interface FrameType {
 
 export type Eye = "R" | "L";
 
+/** Eye scope of a price row: right, left, or both eyes (the usual case). */
+export type EyeScope = Eye | "B";
+
 /** What the catalog record actually is. */
 export type ProductKind = "lens" | "frame" | "frame_lens";
 
+/**
+ * A price row. Prices in real optical price lists are given for a RANGE of
+ * powers (e.g. SPH from PL to -6.00 with CYL up to -2.00), so every row stores
+ * a min/max for both SPH and CYL. A single exact power is just min === max.
+ */
 export interface ItemSize {
   id: string;
   item_id: string;
-  eye: Eye;
-  sph: number;
-  cyl: number;
+  /** Optional per-row lens type, overrides the item-level one (price lists price per brand). */
+  lens_type_id?: string | undefined;
+  eye: EyeScope;
+  sph_min: number;
+  sph_max: number;
+  cyl_min: number;
+  cyl_max: number;
   price: number;
+  /** Free note shown next to the price, e.g. "60mm" or "مجموع 6 سلندر 4". */
+  note?: string | undefined;
 }
+
 
 export interface Item {
   id: string;
