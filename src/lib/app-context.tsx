@@ -281,18 +281,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (!Number.isFinite(item.price ?? NaN) || (item.price ?? 0) <= 0)
           return "Frame price must be a valid positive number.";
       } else {
-        if (!item.lens_type_id) return "Lens type is required.";
-        if (sizes.length === 0) return "Add at least one lens (eye + SPH + CYL) with its price.";
-        if (sizes.some((s) => s.eye !== "R" && s.eye !== "L"))
-          return "Each lens must be assigned to the right (R) or left (L) eye.";
-        if (sizes.some((s) => !Number.isFinite(s.sph) || !Number.isFinite(s.cyl)))
-          return "SPH and CYL must be valid numbers.";
-        const normalized = sizes.map((s) => `${s.eye}|${s.sph}|${s.cyl}`);
+        if (!item.lens_type_id && sizes.some((s) => !s.lens_type_id))
+          return "Lens type is required (on the item or on each price row).";
+        if (sizes.length === 0) return "Add at least one price row (SPH/CYL range + price).";
+        if (sizes.some((s) => s.eye !== "R" && s.eye !== "L" && s.eye !== "B"))
+          return "Each price row must target the right eye, left eye, or both.";
+        if (
+          sizes.some(
+            (s) =>
+              !Number.isFinite(s.sph_min) ||
+              !Number.isFinite(s.sph_max) ||
+              !Number.isFinite(s.cyl_min) ||
+              !Number.isFinite(s.cyl_max),
+          )
+        )
+          return "SPH and CYL ranges must be valid numbers.";
+        const normalized = sizes.map(
+          (s) => `${s.eye}|${s.lens_type_id ?? ""}|${s.sph_min}|${s.sph_max}|${s.cyl_min}|${s.cyl_max}`,
+        );
         if (new Set(normalized).size !== normalized.length)
-          return "This eye already has the same SPH and CYL for this item.";
+          return "This price row (same eye, lens type and range) already exists.";
         if (sizes.some((s) => !Number.isFinite(s.price) || s.price <= 0))
           return "Price must be a valid positive number.";
       }
+
 
       const exists = db.items.some((i) => i.id === item.id);
       const stamp = new Date().toISOString();
