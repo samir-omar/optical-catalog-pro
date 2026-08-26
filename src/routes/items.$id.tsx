@@ -129,25 +129,42 @@ function ItemDetails() {
         <div className="card-elevated p-6">
           <h2 className="text-lg font-semibold">Lens Powers &amp; Prices</h2>
           <p className="text-sm text-muted-foreground">
-            Each eye (R / L) has its own SPH and CYL with a fixed price.
+            Every row covers a range of powers. A prescription is priced by the row its SPH and
+            CYL fall into.
           </p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {sizes.map((s) => (
-              <div key={s.id} className="rounded-xl border border-border bg-muted/40 p-5">
-                <Badge variant={s.eye === "R" ? "default" : "secondary"} className="text-sm">
-                  {s.eye === "R" ? "Right eye (R)" : "Left eye (L)"}
-                </Badge>
-                <p className="mt-3 text-sm tabular-nums text-muted-foreground">
-                  SPH {formatDiopter(s.sph)} · CYL {formatDiopter(s.cyl)}
-                </p>
-                <p className="mt-1 text-3xl font-bold text-price">{formatPrice(s.price)}</p>
-              </div>
-            ))}
+            {sizes.map((s) => {
+              const rowLensType =
+                db.lens_types.find((l) => l.id === (s.lens_type_id ?? item.lens_type_id))?.name ??
+                null;
+              return (
+                <div key={s.id} className="rounded-xl border border-border bg-muted/40 p-5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={s.eye === "L" ? "secondary" : "default"} className="text-sm">
+                      {eyeLabel(s.eye)}
+                    </Badge>
+                    {rowLensType ? (
+                      <Badge variant="outline" className="text-sm">
+                        {rowLensType}
+                      </Badge>
+                    ) : null}
+                  </div>
+                  <p className="mt-3 text-sm tabular-nums text-muted-foreground">
+                    {rangeLabel(s)}
+                  </p>
+                  <p className="mt-1 text-3xl font-bold text-price">{formatPrice(s.price)}</p>
+                  {s.note ? (
+                    <p className="mt-1 text-xs text-muted-foreground">{s.note}</p>
+                  ) : null}
+                </div>
+              );
+            })}
             {sizes.length === 0 ? (
               <p className="text-sm text-muted-foreground">No lens powers recorded.</p>
             ) : null}
           </div>
         </div>
+
       </div>
     </AppShell>
   );
