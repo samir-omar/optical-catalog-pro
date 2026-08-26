@@ -1,12 +1,13 @@
-import type { Database, Eye, ProductKind } from "./types";
+import type { Database, Eye, EyeScope, ItemSize, ProductKind } from "./types";
 
-const STORAGE_KEY = "optic-catalog-db-v3";
+const STORAGE_KEY = "optic-catalog-db-v4";
 
 export const hashPassword = (pw: string) =>
   typeof window === "undefined" ? pw : btoa(`optic::${pw}`);
 
+let uidCounter = 0;
 export const uid = () =>
-  `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+  `${Date.now().toString(36)}-${(uidCounter++).toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
 const now = () => new Date().toISOString();
 
@@ -14,7 +15,13 @@ const now = () => new Date().toISOString();
 export const formatDiopter = (n: number) =>
   `${n > 0 ? "+" : n < 0 ? "-" : ""}${Math.abs(n).toFixed(2)}`;
 
-export const eyeLabel = (eye: Eye) => (eye === "R" ? "Right (R)" : "Left (L)");
+/** Price lists write 0.00 as "PL" (plano). */
+export const diopterLabel = (n: number) => (n === 0 ? "PL" : formatDiopter(n));
+
+export const eyeLabel = (eye: EyeScope) =>
+  eye === "R" ? "Right (R)" : eye === "L" ? "Left (L)" : "Both eyes";
+
+export const eyeShort = (eye: EyeScope) => (eye === "B" ? "R+L" : eye);
 
 export const KINDS: Array<{ value: ProductKind; label: string; short: string }> = [
   { value: "lens", label: "Lenses only", short: "Lenses" },
@@ -33,16 +40,45 @@ export const hasLensPowers = (k: ProductKind) => k !== "frame";
 /** Lens-only records have no frame, so no frame type. */
 export const hasFrame = (k: ProductKind) => k !== "lens";
 
-export const lensLabel = (s: { eye: Eye; sph: number; cyl: number }) =>
-  `${s.eye} · SPH ${formatDiopter(s.sph)} · CYL ${formatDiopter(s.cyl)}`;
+type RangeLike = Pick<ItemSize, "sph_min" | "sph_max" | "cyl_min" | "cyl_max">;
 
-/** Parses "+6", "6.00", "-1.5" into a number; returns null when invalid. */
+const span = (min: number, max: number) =>
+  min === max ? diopterLabel(min) : `${diopterLabel(min)} → ${diopterLabel(max)}`;
+
+/** "SPH PL → -6.00 · CYL 0.00 → -2.00" */
+export const rangeLabel = (s: RangeLike) =>
+  `SPH ${span(s.sph_min, s.sph_max)} · CYL ${span(s.cyl_min, s.cyl_max)}`;
+
+export const lensLabel = (s: RangeLike & { eye: EyeScope }) =>
+  `${eyeShort(s.eye)} · ${rangeLabel(s)}`;
+
+/** True when a requested power falls inside the row's range (order-independent). */
+export const inRange = (value: number, a: number, b: number, tolerance = 0) =>
+  value >= Math.min(a, b) - tolerance && value <= Math.max(a, b) + tolerance;
+
+export const rowMatches = (
+  row: RangeLike & { eye: EyeScope },
+  q: { sph?: number | null; cyl?: number | null; eye?: "all" | Eye },
+  tolerance = 0,
+) => {
+  if (q.eye && q.eye !== "all" && row.eye !== "B" && row.eye !== q.eye) return false;
+  if (q.sph !== null && q.sph !== undefined && !inRange(q.sph, row.sph_min, row.sph_max, tolerance))
+    return false;
+  if (q.cyl !== null && q.cyl !== undefined && !inRange(q.cyl, row.cyl_min, row.cyl_max, tolerance))
+    return false;
+  return true;
+};
+
+/** Parses "+6", "6.00", "-1.5", "PL", "0" into a number; returns null when invalid. */
 export const parseDiopter = (raw: string): number | null => {
   const v = raw.trim().replace(/\s+/g, "");
-  if (!v || !/^[+-]?\d+(\.\d+)?$/.test(v)) return null;
+  if (!v) return null;
+  if (/^(pl|plano)$/i.test(v)) return 0;
+  if (!/^[+-]?\d+(\.\d+)?$/.test(v)) return null;
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 };
+
 
 function seed(): Database {
   const supA = { id: uid(), name: "Vision Optics Co.", phone: "0100 111 2233", notes: "Frames importer", created_at: now() };
