@@ -70,9 +70,9 @@ function ItemsSearch() {
       sku: string;
       image?: string | undefined;
       sizeId: string;
-      eye: Eye;
-      sph: number;
-      cyl: number;
+      eye: EyeScope;
+      range: string;
+      note?: string | undefined;
       price: number;
       kind: ProductKind;
       lensType: string;
@@ -84,7 +84,6 @@ function ItemsSearch() {
 
     for (const item of db.items) {
       if (kindFilter !== "all" && item.kind !== kindFilter) continue;
-      if (lensTypeFilter !== "all" && item.lens_type_id !== lensTypeFilter) continue;
       if (frameTypeFilter !== "all" && item.frame_type_id !== frameTypeFilter) continue;
       if (supplier !== "all" && item.supplier_id !== supplier) continue;
       if (category !== "all" && item.customer_category_id !== category) continue;
@@ -93,36 +92,33 @@ function ItemsSearch() {
 
       const itemSizes = db.sizes
         .filter((s) => s.item_id === item.id)
-        .sort((a, b) => (a.eye === b.eye ? a.sph - b.sph : a.eye === "R" ? -1 : 1));
+        .sort((a, b) => (a.eye === b.eye ? a.sph_min - b.sph_min : a.eye < b.eye ? -1 : 1));
+
+      const lensTypeOf = (s: (typeof itemSizes)[number]) => s.lens_type_id ?? item.lens_type_id;
 
       const matching = itemSizes.filter((s) => {
-        if (eyeFilter !== "all" && s.eye !== eyeFilter) return false;
-        if (sphQ !== null && Math.abs(s.sph - sphQ) > tol) return false;
-        if (cylQ !== null && Math.abs(s.cyl - cylQ) > tol) return false;
-        return true;
+        if (lensTypeFilter !== "all" && lensTypeOf(s) !== lensTypeFilter) return false;
+        return rowMatches(s, { sph: sphQ, cyl: cylQ, eye: eyeFilter }, tol);
       });
-      if (matching.length === 0) continue;
 
       const supplierName =
         db.suppliers.find((s) => s.id === item.supplier_id)?.name ?? "—";
       const categoryName =
         db.categories.find((c) => c.id === item.customer_category_id)?.name ?? "—";
-      const lensTypeName =
-        db.lens_types.find((l) => l.id === item.lens_type_id)?.name ?? "—";
 
       if (!hasLensPowers(item.kind)) {
+        if (lensTypeFilter !== "all") continue;
         rows.push({
           itemId: item.id,
           name: item.name,
           sku: item.sku,
           image: item.image,
           sizeId: item.id,
-          eye: "R",
-          sph: 0,
-          cyl: 0,
+          eye: "B",
+          range: "Frame only",
           price: item.price ?? 0,
           kind: item.kind,
-          lensType: lensTypeName,
+          lensType: "—",
           supplier: supplierName,
           category: categoryName,
           allSizes: [],
@@ -130,6 +126,8 @@ function ItemsSearch() {
         });
         continue;
       }
+
+      if (matching.length === 0) continue;
 
       for (const m of matching) {
         rows.push({
@@ -139,20 +137,22 @@ function ItemsSearch() {
           image: item.image,
           sizeId: m.id,
           eye: m.eye,
-          sph: m.sph,
-          cyl: m.cyl,
+          range: rangeLabel(m),
+          note: m.note,
           price: m.price,
           kind: item.kind,
-          lensType: lensTypeName,
+          lensType: db.lens_types.find((l) => l.id === lensTypeOf(m))?.name ?? "—",
           supplier: supplierName,
           category: categoryName,
-          allSizes: itemSizes.map((s) => lensLabel(s)),
+          allSizes: itemSizes.slice(0, 6).map((s) => lensLabel(s)),
           created_at: item.created_at,
         });
       }
     }
+    rows.sort((a, b) => a.price - b.price);
     return rows;
   }, [db, sphQuery, cylQuery, eyeFilter, exact, text, supplier, category, kindFilter, lensTypeFilter, frameTypeFilter]);
+
 
   return (
     <AppShell title="Items" description="Search the catalog by eye, SPH and CYL">
