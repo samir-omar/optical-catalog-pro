@@ -322,11 +322,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const newSizes: ItemSize[] = (withLenses ? sizes : []).map((s) => ({
         id: s.id || uid(),
         item_id: record.id,
+        lens_type_id: s.lens_type_id,
         eye: s.eye,
-        sph: s.sph,
-        cyl: s.cyl,
+        sph_min: s.sph_min,
+        sph_max: s.sph_max,
+        cyl_min: s.cyl_min,
+        cyl_max: s.cyl_max,
         price: s.price,
+        note: s.note,
       }));
+
       commit({
         ...db,
         items: exists ? db.items.map((i) => (i.id === record.id ? record : i)) : [...db.items, record],
