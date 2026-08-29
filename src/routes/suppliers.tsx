@@ -91,10 +91,17 @@ function SuppliersPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="snotes">Notes</Label>
-            <Textarea id="snotes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+            <Textarea
+              id="snotes"
+              rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
           </div>
           {error ? (
-            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
           ) : null}
           <div className="flex gap-2">
             <Button type="submit" className="flex-1">

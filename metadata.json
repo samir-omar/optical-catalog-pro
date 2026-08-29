@@ -1,0 +1,6 @@
+{
+  "name": "Optical Catalog Pro",
+  "description": "Professional desktop eyewear price catalog system for optical shops to search glasses by size and view instant pricing.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

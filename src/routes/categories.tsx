@@ -98,7 +98,9 @@ function CategoriesPage() {
             />
           </div>
           {error ? (
-            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
           ) : null}
           <div className="flex gap-2">
             <Button type="submit" className="flex-1">

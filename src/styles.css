@@ -46,7 +46,7 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Cairo", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
@@ -87,7 +87,8 @@
   --sidebar-ring: oklch(0.72 0.12 234);
 
   --gradient-brand: linear-gradient(135deg, oklch(0.28 0.075 259), oklch(0.46 0.11 240));
-  --shadow-card: 0 1px 2px oklch(0.24 0.055 258 / 0.06), 0 8px 24px -12px oklch(0.24 0.055 258 / 0.25);
+  --shadow-card:
+    0 1px 2px oklch(0.24 0.055 258 / 0.06), 0 8px 24px -12px oklch(0.24 0.055 258 / 0.25);
   --shadow-float: 0 20px 50px -24px oklch(0.24 0.055 258 / 0.45);
 }
 

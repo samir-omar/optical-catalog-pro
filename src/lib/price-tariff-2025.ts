@@ -1,0 +1,745 @@
+import { uid } from "./db";
+import type {
+  ExtractedPriceItem,
+  EyeScope,
+  HierarchicalMainItem,
+  HierarchicalSizeRow,
+  HierarchicalTypeVariant,
+} from "./types";
+
+export interface TariffBrandData {
+  mainItem: string;
+  variantType: string;
+  brand: string;
+  category: string;
+  lensType: string;
+  indexMaterial: string;
+  sphMin: number;
+  sphMax: number;
+  cylMin: number;
+  cylMax: number;
+  price: number;
+  note?: string;
+}
+
+/**
+ * Official Egyptian Optical Tariff & Catalog
+ * Structured strictly by: Main Item -> Type / Variant -> Size (Power Range) -> Price
+ */
+export const OMAB_2025_TARIFF_DATA: TariffBrandData[] = [
+  // ================= 1. بالستين أبيض (White Plastic / CR39) =================
+  {
+    mainItem: "بالستين أبيض",
+    variantType: "1.56",
+    brand: "صيني / كوري",
+    category: "بالستين أبيض 1.56 ستوك",
+    lensType: "White",
+    indexMaterial: "1.56",
+    sphMin: -6.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 320,
+    note: "سفير حتى 6.00- سلندر حتى 2.00-",
+  },
+  {
+    mainItem: "بالستين أبيض",
+    variantType: "1.56",
+    brand: "صيني / كوري",
+    category: "بالستين أبيض 1.56 بلس",
+    lensType: "White",
+    indexMaterial: "1.56",
+    sphMin: 0.25,
+    sphMax: 4.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 380,
+    note: "سفير +0.25 إلى +4.00 سلندر حتى 2.00-",
+  },
+  {
+    mainItem: "بالستين أبيض",
+    variantType: "1.56",
+    brand: "صيني / كوري",
+    category: "بالستين أبيض 1.56 سفير عالي",
+    lensType: "White",
+    indexMaterial: "1.56",
+    sphMin: -10.0,
+    sphMax: -6.25,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 520,
+    note: "سفير عالي -6.25 إلى -10.00",
+  },
+  {
+    mainItem: "بالستين أبيض",
+    variantType: "1.60",
+    brand: "كوداك Kodak",
+    category: "بالستين أبيض كوداك 1.60 مضغوط",
+    lensType: "White",
+    indexMaterial: "1.60",
+    sphMin: -8.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 850,
+    note: "كوداك أبيض مضغوط 1.60",
+  },
+  {
+    mainItem: "بالستين أبيض",
+    variantType: "1.67",
+    brand: "ياباني بلاتنيوم",
+    category: "بالستين أبيض بلاتنيوم 1.67 فائق الضغط",
+    lensType: "White",
+    indexMaterial: "1.67",
+    sphMin: -12.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 1450,
+    note: "بلاتنيوم 1.67 أبيض رقيق جداً",
+  },
+
+  // ================= 2. بالستين أخضر (Green AR Anti-Reflective) =================
+  {
+    mainItem: "بالستين أخضر",
+    variantType: "1.56",
+    brand: "سكوير صيني",
+    category: "بالستين أخضر HMC 1.56",
+    lensType: "Green AR",
+    indexMaterial: "1.56",
+    sphMin: -6.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 360,
+    note: "عاكس أخضر مضاد للوهج ستوك",
+  },
+  {
+    mainItem: "بالستين أخضر",
+    variantType: "1.56",
+    brand: "سكوير إيطالي",
+    category: "بالستين أخضر سكوير إيطالي 1.56",
+    lensType: "Green AR",
+    indexMaterial: "1.56",
+    sphMin: -6.0,
+    sphMax: 4.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 520,
+    note: "سكوير إيطالي طبقة خضراء عالية النقاء",
+  },
+  {
+    mainItem: "بالستين أخضر",
+    variantType: "1.60",
+    brand: "داجاس Dagas",
+    category: "بالستين أخضر داجاس كوري 1.60",
+    lensType: "Green AR",
+    indexMaterial: "1.60",
+    sphMin: -8.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 780,
+    note: "داجاس كوري أخضر مضغوط",
+  },
+
+  // ================= 3. بلوكت (Blue Cut / UV420 Screen Protection) =================
+  {
+    mainItem: "بلوكت",
+    variantType: "1.56",
+    brand: "صيني / كوري",
+    category: "بلوكت كوري / صيني 1.56",
+    lensType: "Blue Cut",
+    indexMaterial: "1.56",
+    sphMin: -6.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 450,
+    note: "بلوكت صيني ستوك لحماية الشاشات",
+  },
+  {
+    mainItem: "بلوكت",
+    variantType: "1.56",
+    brand: "سكوير صيني",
+    category: "بلوكت سكوير صيني 1.56",
+    lensType: "Blue Cut",
+    indexMaterial: "1.56",
+    sphMin: -6.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 550,
+    note: "بلوكت سكوير كوري/صيني",
+  },
+  {
+    mainItem: "بلوكت",
+    variantType: "1.56",
+    brand: "سكوير إيطالي",
+    category: "بلوكت سكوير إيطالي 1.56",
+    lensType: "Blue Cut",
+    indexMaterial: "1.56",
+    sphMin: -6.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 750,
+    note: "سكوير إيطالي حماية متقدمة UV420",
+  },
+  {
+    mainItem: "بلوكت",
+    variantType: "1.56",
+    brand: "كوداك Kodak",
+    category: "بلوكت كوداك Kodak Blue Protect 1.56",
+    lensType: "Blue Cut",
+    indexMaterial: "1.56",
+    sphMin: -6.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 1100,
+    note: "كوداك بلو بروتكت أصلي مع كارت الضمان",
+  },
+  {
+    mainItem: "بلوكت",
+    variantType: "1.56",
+    brand: "ياباني بلاتنيوم",
+    category: "بلوكت ياباني بلاتنيوم Platinum 1.56",
+    lensType: "Blue Cut",
+    indexMaterial: "1.56",
+    sphMin: -6.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 950,
+    note: "بلاتنيوم ياباني فلتر أزرق نقي",
+  },
+  {
+    mainItem: "بلوكت",
+    variantType: "1.60",
+    brand: "سايكو Seiko",
+    category: "بلوكت سايكو Seiko 1.60 مضغوط",
+    lensType: "Blue Cut",
+    indexMaterial: "1.60",
+    sphMin: -8.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 1850,
+    note: "سايكو ياباني مضغوط 1.60 بلوكت",
+  },
+  {
+    mainItem: "بلوكت",
+    variantType: "1.60",
+    brand: "BBGR فرنسي",
+    category: "بلوكت BBGR فرنسي Neva Max Blue 1.60",
+    lensType: "Blue Cut",
+    indexMaterial: "1.60",
+    sphMin: -8.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 2200,
+    note: "BBGR فرنسا حماية فائقة وضغط 1.60",
+  },
+  {
+    mainItem: "بلوكت",
+    variantType: "1.67",
+    brand: "داجاس Dagas",
+    category: "بلوكت داجاس 1.67 فائق الضغط",
+    lensType: "Blue Cut",
+    indexMaterial: "1.67",
+    sphMin: -10.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 1650,
+    note: "داجاس كوري 1.67 بلوكت فائق الرقة",
+  },
+
+  // ================= 4. فوتوجراي بالستين (Photochromic Gray) =================
+  {
+    mainItem: "فوتوجراي بالستين",
+    variantType: "1.56",
+    brand: "صيني / كوري",
+    category: "فوتوجراي بالستين كوري 1.56 عادي",
+    lensType: "Photochromic",
+    indexMaterial: "1.56",
+    sphMin: -6.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 600,
+    note: "فوتوجراي سريع التعتيم رمادي",
+  },
+  {
+    mainItem: "فوتوجراي بالستين",
+    variantType: "1.56",
+    brand: "سكوير صيني",
+    category: "فوتوجراي سكوير صيني 1.56",
+    lensType: "Photochromic",
+    indexMaterial: "1.56",
+    sphMin: -6.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 750,
+    note: "سكوير فوتوجراي رمادي ستوك",
+  },
+  {
+    mainItem: "فوتوجراي بالستين",
+    variantType: "1.56",
+    brand: "كوداك Kodak",
+    category: "فوتوجراي كوداك Kodak SunSensors 1.56",
+    lensType: "Photochromic",
+    indexMaterial: "1.56",
+    sphMin: -6.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 1600,
+    note: "كوداك صن سينسورز تعتيم ذكي",
+  },
+  {
+    mainItem: "فوتوجراي بالستين",
+    variantType: "1.60",
+    brand: "ياباني بلاتنيوم",
+    category: "فوتوجراي بلاتنيوم 1.60 مضغوط",
+    lensType: "Photochromic",
+    indexMaterial: "1.60",
+    sphMin: -8.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 1750,
+    note: "بلاتنيوم ياباني فوتوجراي مضغوط 1.60",
+  },
+
+  // ================= 5. فوتوجراي بلوكت (Photochromic + Blue Cut 2-in-1) =================
+  {
+    mainItem: "فوتوجراي بلوكت",
+    variantType: "1.56",
+    brand: "صيني / كوري",
+    category: "فوتوجراي بلوكت كوري 1.56 (2×1)",
+    lensType: "Blue Cut Photochromic",
+    indexMaterial: "1.56",
+    sphMin: -6.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 750,
+    note: "فوتو + بلوكت حماية شاشات وتعتيم شمس",
+  },
+  {
+    mainItem: "فوتوجراي بلوكت",
+    variantType: "1.56",
+    brand: "سكوير إيطالي",
+    category: "فوتوجراي بلوكت سكوير إيطالي 1.56",
+    lensType: "Blue Cut Photochromic",
+    indexMaterial: "1.56",
+    sphMin: -6.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 1300,
+    note: "سكوير إيطالي فوتو بلوكت فائق السرعة",
+  },
+  {
+    mainItem: "فوتوجراي بلوكت",
+    variantType: "1.56",
+    brand: "ياباني بلاتنيوم",
+    category: "فوتوجراي بلوكت ياباني بلاتنيوم 1.56",
+    lensType: "Blue Cut Photochromic",
+    indexMaterial: "1.56",
+    sphMin: -6.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 1450,
+    note: "بلاتنيوم ياباني حماية مزدوجة ونقاء عالي",
+  },
+  {
+    mainItem: "فوتوجراي بلوكت",
+    variantType: "1.60",
+    brand: "Star Vision",
+    category: "فوتوجراي بلوكت ستار فيجن 1.60 مضغوط",
+    lensType: "Blue Cut Photochromic",
+    indexMaterial: "1.60",
+    sphMin: -8.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 2100,
+    note: "ستار فيجن فوتو بلوكت 1.60",
+  },
+
+  // ================= 6. قيادة ليلية (Night Drive Anti-Glare) =================
+  {
+    mainItem: "قيادة ليلية",
+    variantType: "1.56",
+    brand: "سكوير إيطالي",
+    category: "عدسات قيادة ليلية نايت درايف سكوير 1.56",
+    lensType: "Night Drive",
+    indexMaterial: "1.56",
+    sphMin: -6.0,
+    sphMax: 2.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 950,
+    note: "تفلتر أضواء السيارات الصفراء وتزيد التباين الليلي",
+  },
+  {
+    mainItem: "قيادة ليلية",
+    variantType: "1.60",
+    brand: "داجاس Dagas",
+    category: "عدسات قيادة ليلية داجاس كوري 1.60",
+    lensType: "Night Drive",
+    indexMaterial: "1.60",
+    sphMin: -8.0,
+    sphMax: 2.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 1550,
+    note: "داجاس نايت درايف مضغوط 1.60",
+  },
+
+  // ================= 7. مقاوم للكسر (Polycarbonate / Trivex / Anti-Break) =================
+  {
+    mainItem: "مقاوم للكسر",
+    variantType: "1.59",
+    brand: "بولي كاربونايت Polycarbonate",
+    category: "بولي كاربونايت مقاوم للكسر 1.59",
+    lensType: "Polycarbonate",
+    indexMaterial: "1.59",
+    sphMin: -6.0,
+    sphMax: 4.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 850,
+    note: "عدسات غير قابلة للكسر للنظارات بدون إطار (Rimless) والأطفال",
+  },
+  {
+    mainItem: "مقاوم للكسر",
+    variantType: "1.53",
+    brand: "تريفكس Trivex",
+    category: "تريفكس Trivex فائق الخفة والمقاومة 1.53",
+    lensType: "Polycarbonate",
+    indexMaterial: "1.53",
+    sphMin: -6.0,
+    sphMax: 4.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 1350,
+    note: "تريفكس فائق الشفافية وخفيف الوزن جداً",
+  },
+
+  // ================= 8. مضغوط (High Index 1.61 / 1.67) =================
+  {
+    mainItem: "مضغوط",
+    variantType: "1.61",
+    brand: "صيني / كوري",
+    category: "مضغوط كوري 1.61 أبيض / بلوكت",
+    lensType: "High Index",
+    indexMaterial: "1.61",
+    sphMin: -8.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 850,
+    note: "مضغوط 1.61 أرق بنسبة 25% من العادي",
+  },
+  {
+    mainItem: "مضغوط",
+    variantType: "1.67",
+    brand: "داجاس Dagas",
+    category: "مضغوط داجاس كوري 1.67 فائق الضغط",
+    lensType: "High Index",
+    indexMaterial: "1.67",
+    sphMin: -10.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 1450,
+    note: "مضغوط 1.67 أرق بنسبة 40% من العادي",
+  },
+  {
+    mainItem: "مضغوط",
+    variantType: "1.67",
+    brand: "ياباني بلاتنيوم",
+    category: "مضغوط بلاتنيوم ياباني 1.67 بلوكت",
+    lensType: "High Index",
+    indexMaterial: "1.67",
+    sphMin: -12.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 1850,
+    note: "بلاتنيوم ياباني 1.67 فائق الرقة للأرقام العالية",
+  },
+
+  // ================= 9. 1.74 (Ultra Thin 1.74) =================
+  {
+    mainItem: "1.74",
+    variantType: "1.74",
+    brand: "ياباني بلاتنيوم",
+    category: "عدسات 1.74 ياباني بلاتنيوم Ultra Thin",
+    lensType: "Ultra Thin 1.74",
+    indexMaterial: "1.74",
+    sphMin: -15.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 3200,
+    note: "أرق عدسة بلاستيكية في العالم، تنحيف 55% للأرقام العالية جداً",
+  },
+  {
+    mainItem: "1.74",
+    variantType: "1.74",
+    brand: "داجاس Dagas",
+    category: "عدسات داجاس 1.74 كوري بلوكت",
+    lensType: "Ultra Thin 1.74",
+    indexMaterial: "1.74",
+    sphMin: -14.0,
+    sphMax: 0.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 2800,
+    note: "داجاس 1.74 مضغوط كوري فائق النحافة",
+  },
+
+  // ================= 10. تصنيعات سكوب (Scope Rx Custom Lab) =================
+  {
+    mainItem: "تصنيعات سكوب",
+    variantType: "تصنيع خاص Rx",
+    brand: "معمل سكوب Scope",
+    category: "تصنيع سكوب سفير / سلندر خاص 1.56",
+    lensType: "Custom Rx",
+    indexMaterial: "1.56",
+    sphMin: -16.0,
+    sphMax: 10.0,
+    cylMin: -6.0,
+    cylMax: 0.0,
+    price: 1200,
+    note: "تصنيع معملي مخصص لدرجات السفير والسلندر العالية",
+  },
+  {
+    mainItem: "تصنيعات سكوب",
+    variantType: "بروجريسيف سكوب ديجيتال",
+    brand: "معمل سكوب Scope",
+    category: "بروجريسيف فري فورم سكوب 1.56",
+    lensType: "Progressive",
+    indexMaterial: "1.56",
+    sphMin: -8.0,
+    sphMax: 6.0,
+    cylMin: -4.0,
+    cylMax: 0.0,
+    price: 2400,
+    note: "متعددة البؤر ديجيتال فري فورم صناعة سكوب",
+  },
+
+  // ================= 11. باي فوكل (Bifocal Lenses - Flattop & Cryptok) =================
+  {
+    mainItem: "باي فوكل",
+    variantType: "Flattop 1.56",
+    brand: "صيني / كوري",
+    category: "باي فوكل فلات توب أبيض 1.56",
+    lensType: "Bifocal",
+    indexMaterial: "1.56",
+    sphMin: -4.0,
+    sphMax: 4.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 650,
+    note: "باي فوكل فلات توب قراءة ومسافة بفاصل مستقيم",
+  },
+  {
+    mainItem: "باي فوكل",
+    variantType: "Cryptok 1.56",
+    brand: "صيني / كوري",
+    category: "باي فوكل كريبك فوتوجراي 1.56",
+    lensType: "Bifocal",
+    indexMaterial: "1.56",
+    sphMin: -4.0,
+    sphMax: 4.0,
+    cylMin: -2.0,
+    cylMax: 0.0,
+    price: 950,
+    note: "باي فوكل دائري كريبك بتعتيم شمس",
+  },
+
+  // ================= 12. تصنيعات النور (Al-Nour Rx Lab Manufacturing) =================
+  {
+    mainItem: "تصنيعات النور",
+    variantType: "تصنيع معمل النور",
+    brand: "معمل النور Al-Nour",
+    category: "تصنيع معمل النور سلندر عالي ومضغوط 1.60",
+    lensType: "Custom Rx",
+    indexMaterial: "1.60",
+    sphMin: -14.0,
+    sphMax: 8.0,
+    cylMin: -6.0,
+    cylMax: 0.0,
+    price: 1350,
+    note: "تصنيع معمل النور درجات مركبة ومضغوطة",
+  },
+  {
+    mainItem: "تصنيعات النور",
+    variantType: "بروجريسيف النور HD",
+    brand: "معمل النور Al-Nour",
+    category: "بروجريسيف النور عالي الدقة 1.60",
+    lensType: "Progressive",
+    indexMaterial: "1.60",
+    sphMin: -8.0,
+    sphMax: 6.0,
+    cylMin: -3.0,
+    cylMax: 0.0,
+    price: 2600,
+    note: "بروجريسيف متقدم معالجة كمبيوتر من معمل النور",
+  },
+
+  // ================= 13. العدسات اللاصقة (Contact Lenses) =================
+  {
+    mainItem: "العدسات اللاصقة",
+    variantType: "طبية شفافة شهرية",
+    brand: "FreshLook / Bausch & Lomb",
+    category: "عدسات لاصقة طبية شفافة شهرية (علبة 6 عدسات)",
+    lensType: "Contact Lens",
+    indexMaterial: "Hydrogel",
+    sphMin: -10.0,
+    sphMax: 0.0,
+    cylMin: 0.0,
+    cylMax: 0.0,
+    price: 550,
+    note: "علبة 6 عدسات سيليكون هيدروجيل شهرية أصلية",
+  },
+  {
+    mainItem: "العدسات اللاصقة",
+    variantType: "ملونة طبية / زينة",
+    brand: "Bella / FreshLook",
+    category: "عدسات لاصقة ملونة تجميلية / طبية",
+    lensType: "Contact Lens",
+    indexMaterial: "Hydrogel",
+    sphMin: -6.0,
+    sphMax: 0.0,
+    cylMin: 0.0,
+    cylMax: 0.0,
+    price: 650,
+    note: "عدسات ملونة مريحة للعين مع حفظ الرطوبة",
+  },
+  {
+    mainItem: "العدسات اللاصقة",
+    variantType: "توريك استجماتيزم (Toric)",
+    brand: "Acuvue / Biofinity",
+    category: "عدسات لاصقة توريك لتصحيح الاستجماتيزم",
+    lensType: "Contact Lens",
+    indexMaterial: "Silicone Hydrogel",
+    sphMin: -8.0,
+    sphMax: 0.0,
+    cylMin: -2.75,
+    cylMax: -0.75,
+    price: 980,
+    note: "عدسات توريك لتصحيح السلندر والاستجماتيزم",
+  },
+];
+
+/**
+ * Builds ExtractedPriceItem array preserving the strict hierarchy:
+ * Main Item -> Type / Variant -> Size -> Price
+ */
+export function getOmab2025ExtractedItems(): ExtractedPriceItem[] {
+  return OMAB_2025_TARIFF_DATA.map((item) => ({
+    id: uid(),
+    main_item_name: item.mainItem,
+    variant_type: item.variantType,
+    lens_name: `${item.mainItem} - ${item.variantType} (${item.brand})`,
+    brand: item.brand,
+    category: `${item.mainItem} · ${item.variantType}`,
+    lens_type: item.lensType,
+    index_material: item.indexMaterial,
+    eye: "B" as EyeScope,
+    sph_min: item.sphMin,
+    sph_max: item.sphMax,
+    cyl_min: item.cylMin,
+    cyl_max: item.cylMax,
+    current_price: null,
+    new_price: item.price,
+    status: "will_update",
+    note: item.note,
+    selected: true,
+  }));
+}
+
+/**
+ * Transforms flat ExtractedPriceItems into strict tree hierarchy:
+ * Main Item -> Type/Variant -> Size -> Price
+ */
+export function buildHierarchicalStructure(items: ExtractedPriceItem[]): HierarchicalMainItem[] {
+  const mainMap = new Map<
+    string,
+    {
+      id: string;
+      name: string;
+      brand: string;
+      variantsMap: Map<
+        string,
+        {
+          id: string;
+          name: string;
+          index_material: string;
+          sizes: HierarchicalSizeRow[];
+        }
+      >;
+    }
+  >();
+
+  for (const item of items) {
+    const mainName = item.main_item_name || item.category || "عدسات عامة";
+    const variantName = item.variant_type || item.index_material || "1.56";
+    const brand = item.brand || "عام";
+
+    const mainKey = `${mainName}__${brand}`;
+    if (!mainMap.has(mainKey)) {
+      mainMap.set(mainKey, {
+        id: `main_${mainKey}`,
+        name: mainName,
+        brand,
+        variantsMap: new Map(),
+      });
+    }
+
+    const mainEntry = mainMap.get(mainKey)!;
+    if (!mainEntry.variantsMap.has(variantName)) {
+      mainEntry.variantsMap.set(variantName, {
+        id: `var_${mainKey}_${variantName}`,
+        name: variantName,
+        index_material: item.index_material || variantName,
+        sizes: [],
+      });
+    }
+
+    const variantEntry = mainEntry.variantsMap.get(variantName)!;
+    variantEntry.sizes.push({
+      id: item.id,
+      eye: item.eye,
+      sph_min: item.sph_min,
+      sph_max: item.sph_max,
+      cyl_min: item.cyl_min,
+      cyl_max: item.cyl_max,
+      old_price: item.current_price,
+      new_price: item.new_price,
+      status: item.status,
+      matched_item_id: item.matched_item_id,
+      matched_size_id: item.matched_size_id,
+      note: item.note,
+      selected: item.selected ?? true,
+    });
+  }
+
+  return Array.from(mainMap.values()).map((m) => ({
+    id: m.id,
+    name: m.name,
+    brand: m.brand,
+    variants: Array.from(m.variantsMap.values()),
+    totalSizesCount: Array.from(m.variantsMap.values()).reduce((acc, v) => acc + v.sizes.length, 0),
+  }));
+}

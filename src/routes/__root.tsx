@@ -79,21 +79,36 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Eyewear Price Catalog" },
+      { title: "Optical Catalog Pro" },
       {
         name: "description",
-        content: "Optical shop catalog: search glasses by size and see the fixed price instantly.",
+        content:
+          "Professional desktop eyewear price catalog system for optical shops to search glasses by size and view instant pricing.",
       },
-      { property: "og:title", content: "Eyewear Price Catalog" },
+      { property: "og:title", content: "Optical Catalog Pro" },
       {
         property: "og:description",
-        content: "Optical shop catalog: search glasses by size and see the fixed price instantly.",
+        content:
+          "Professional desktop eyewear price catalog system for optical shops to search glasses by size and view instant pricing.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
+      {
+        rel: "preconnect",
+        href: "https://fonts.googleapis.com",
+      },
+      {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossOrigin: "anonymous",
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
+      },
       {
         rel: "stylesheet",
         href: appCss,

@@ -116,6 +116,18 @@ function ItemDetails() {
           <dl className="space-y-3 p-6 text-sm">
             <Row label="Item name" value={item.name} />
             <Row label="Item code" value={item.sku} />
+            {item.main_type ? (
+              <div className="flex justify-between gap-4 border-b border-border pb-2">
+                <dt className="text-muted-foreground">النوع الرئيسي (MAIN TYPE)</dt>
+                <dd className="text-right font-bold text-sky-400">{item.main_type}</dd>
+              </div>
+            ) : null}
+            {item.second_type ? (
+              <div className="flex justify-between gap-4 border-b border-border pb-2">
+                <dt className="text-muted-foreground">النوع الفرعي (SECOND TYPE)</dt>
+                <dd className="text-right font-bold text-emerald-400">{item.second_type}</dd>
+              </div>
+            ) : null}
             <Row label="Supplier / Company" value={supplier} />
             <Row label="Customer category" value={category} />
             <Row label="Date added" value={new Date(item.created_at).toLocaleDateString()} />
@@ -129,8 +141,8 @@ function ItemDetails() {
         <div className="card-elevated p-6">
           <h2 className="text-lg font-semibold">Lens Powers &amp; Prices</h2>
           <p className="text-sm text-muted-foreground">
-            Every row covers a range of powers. A prescription is priced by the row its SPH and
-            CYL fall into.
+            Every row covers a range of powers. A prescription is priced by the row its SPH and CYL
+            fall into.
           </p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {sizes.map((s) => {
@@ -149,13 +161,9 @@ function ItemDetails() {
                       </Badge>
                     ) : null}
                   </div>
-                  <p className="mt-3 text-sm tabular-nums text-muted-foreground">
-                    {rangeLabel(s)}
-                  </p>
+                  <p className="mt-3 text-sm tabular-nums text-muted-foreground">{rangeLabel(s)}</p>
                   <p className="mt-1 text-3xl font-bold text-price">{formatPrice(s.price)}</p>
-                  {s.note ? (
-                    <p className="mt-1 text-xs text-muted-foreground">{s.note}</p>
-                  ) : null}
+                  {s.note ? <p className="mt-1 text-xs text-muted-foreground">{s.note}</p> : null}
                 </div>
               );
             })}
@@ -164,7 +172,6 @@ function ItemDetails() {
             ) : null}
           </div>
         </div>
-
       </div>
     </AppShell>
   );
